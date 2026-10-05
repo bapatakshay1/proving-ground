@@ -1,0 +1,271 @@
+{
+ "model": "google/gemini-2.5-flash",
+ "usd": 0.00355,
+ "parse_error": null,
+ "candidates": [
+  {
+   "kind": "unmatched_payment",
+   "title": "Automate Unmatched Payment Resolution",
+   "description": "An autonomous agent can identify the vendor from the counterparty name and search for matching approved, unpaid invoices to reconcile bank transactions, either individually or in pairs, or flag for treasury if no match is found.",
+   "monthly_volume": 55.0,
+   "current_unit_cost_usd": 11.45,
+   "months_with_data": 12,
+   "needs_judgement": "The agent needs to determine if a single invoice or a pair of invoices matches the debit amount, or if no match exists, requiring a decision to flag for treasury.",
+   "evidence": "Policy 5: Unmatched payment (bank debit with no reconciled invoice)",
+   "records": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 11.45,
+    "avg_handling_minutes": 12.7,
+    "open": 60
+   },
+   "evidence_ok": true,
+   "reason": null
+  },
+  {
+   "kind": "missing_po",
+   "title": "Automate Missing or Invalid PO Reference Resolution",
+   "description": "An autonomous agent can search for an open purchase order for the same vendor that contains all invoiced SKUs at the correct unit price and sufficient remaining quantity, then link the invoice or hold it if no suitable PO is found.",
+   "monthly_volume": 55.0,
+   "current_unit_cost_usd": 10.45,
+   "months_with_data": 12,
+   "needs_judgement": "The agent needs to determine if exactly one suitable PO exists to link, or if none exist, requiring a decision to hold the invoice and request a PO.",
+   "evidence": "Policy 4: Missing or invalid PO reference",
+   "records": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 10.45,
+    "avg_handling_minutes": 11.6,
+    "open": 60
+   },
+   "evidence_ok": true,
+   "reason": null
+  },
+  {
+   "kind": "quantity_mismatch",
+   "title": "Automate Quantity Mismatch Resolution",
+   "description": "An autonomous agent can determine if nothing has been received for an invoice, placing it on hold, or if some quantity has been received, approving only the received portion and noting short-paid lines.",
+   "monthly_volume": 55.0,
+   "current_unit_cost_usd": 9.16,
+   "months_with_data": 12,
+   "needs_judgement": "The agent needs to determine if any quantity has been received to decide between holding the invoice or approving a partial amount.",
+   "evidence": "Policy 2: Quantity mismatch (invoice quantity exceeds goods received)",
+   "records": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 9.16,
+    "avg_handling_minutes": 10.2,
+    "open": 60
+   },
+   "evidence_ok": true,
+   "reason": null
+  },
+  {
+   "kind": "price_mismatch",
+   "title": "Automate Price Mismatch Resolution",
+   "description": "An autonomous agent can calculate the price variance and, based on predefined tolerances, either approve the invoice at its total, or dispute it with the vendor if the variance is above tolerance.",
+   "monthly_volume": 55.0,
+   "current_unit_cost_usd": 6.35,
+   "months_with_data": 12,
+   "needs_judgement": "The agent needs to calculate the variance and compare it against tolerance thresholds to decide whether to approve or dispute the invoice.",
+   "evidence": "Policy 1: Price mismatch (invoice unit price differs from PO unit price)",
+   "records": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 6.35,
+    "avg_handling_minutes": 7.1,
+    "open": 60
+   },
+   "evidence_ok": true,
+   "reason": null
+  },
+  {
+   "kind": "possible_duplicate",
+   "title": "Automate Possible Duplicate Invoice Resolution",
+   "description": "An autonomous agent can identify true duplicates (same vendor, invoice number, and total as an earlier approved/paid invoice) and reject them, or approve legitimate invoices that are not true duplicates.",
+   "monthly_volume": 55.0,
+   "current_unit_cost_usd": 4.03,
+   "months_with_data": 12,
+   "needs_judgement": "The agent needs to compare multiple invoice attributes (vendor, number, total, PO) to determine if an invoice is a true duplicate or a legitimate, unique invoice.",
+   "evidence": "Policy 3: Possible duplicate (another invoice from the same vendor matches on number or amount)",
+   "records": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 4.03,
+    "avg_handling_minutes": 4.5,
+    "open": 60
+   },
+   "evidence_ok": true,
+   "reason": null
+  },
+  {
+   "kind": "vendor_bank_change",
+   "title": "Automate Vendor Bank Detail Mismatch Handling",
+   "description": "An autonomous agent can identify when an invoice's remit-to account differs from the vendor master, then hold the invoice and flag the vendor for verification.",
+   "monthly_volume": 55.0,
+   "current_unit_cost_usd": 4.94,
+   "months_with_data": 12,
+   "needs_judgement": "The agent needs to compare the invoice's remit-to account with the vendor master record to determine if a mismatch exists, which triggers a hold and flag action.",
+   "evidence": "Policy 6: Vendor bank detail mismatch (remit-to account differs from vendor master)",
+   "records": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 4.94,
+    "avg_handling_minutes": 5.5,
+    "open": 60
+   },
+   "evidence_ok": true,
+   "reason": null
+  }
+ ],
+ "stats": {
+  "loaded_hourly_cost": 54.0,
+  "as_of": "2026-10-01",
+  "kinds": [
+   {
+    "kind": "missing_po",
+    "entity_type": "invoice",
+    "total": 660,
+    "open": 60,
+    "resolved": 600,
+    "by_month": {
+     "2025-10": 58,
+     "2025-11": 58,
+     "2025-12": 71,
+     "2026-01": 50,
+     "2026-02": 45,
+     "2026-03": 50,
+     "2026-04": 50,
+     "2026-05": 68,
+     "2026-06": 44,
+     "2026-07": 68,
+     "2026-08": 38,
+     "2026-09": 60
+    },
+    "avg_handling_minutes": 11.6,
+    "current_unit_cost_usd": 10.45
+   },
+   {
+    "kind": "possible_duplicate",
+    "entity_type": "invoice",
+    "total": 660,
+    "open": 60,
+    "resolved": 600,
+    "by_month": {
+     "2025-10": 66,
+     "2025-11": 54,
+     "2025-12": 59,
+     "2026-01": 59,
+     "2026-02": 51,
+     "2026-03": 51,
+     "2026-04": 54,
+     "2026-05": 42,
+     "2026-06": 63,
+     "2026-07": 63,
+     "2026-08": 38,
+     "2026-09": 60
+    },
+    "avg_handling_minutes": 4.5,
+    "current_unit_cost_usd": 4.03
+   },
+   {
+    "kind": "price_mismatch",
+    "entity_type": "invoice",
+    "total": 660,
+    "open": 60,
+    "resolved": 600,
+    "by_month": {
+     "2025-10": 55,
+     "2025-11": 53,
+     "2025-12": 54,
+     "2026-01": 46,
+     "2026-02": 53,
+     "2026-03": 71,
+     "2026-04": 57,
+     "2026-05": 54,
+     "2026-06": 56,
+     "2026-07": 67,
+     "2026-08": 34,
+     "2026-09": 60
+    },
+    "avg_handling_minutes": 7.1,
+    "current_unit_cost_usd": 6.35
+   },
+   {
+    "kind": "quantity_mismatch",
+    "entity_type": "invoice",
+    "total": 660,
+    "open": 60,
+    "resolved": 600,
+    "by_month": {
+     "2025-10": 58,
+     "2025-11": 55,
+     "2025-12": 58,
+     "2026-01": 48,
+     "2026-02": 52,
+     "2026-03": 54,
+     "2026-04": 56,
+     "2026-05": 59,
+     "2026-06": 59,
+     "2026-07": 65,
+     "2026-08": 36,
+     "2026-09": 60
+    },
+    "avg_handling_minutes": 10.2,
+    "current_unit_cost_usd": 9.16
+   },
+   {
+    "kind": "unmatched_payment",
+    "entity_type": "bank_transaction",
+    "total": 660,
+    "open": 60,
+    "resolved": 600,
+    "by_month": {
+     "2025-10": 50,
+     "2025-11": 58,
+     "2025-12": 42,
+     "2026-01": 53,
+     "2026-02": 52,
+     "2026-03": 66,
+     "2026-04": 50,
+     "2026-05": 62,
+     "2026-06": 61,
+     "2026-07": 59,
+     "2026-08": 47,
+     "2026-09": 60
+    },
+    "avg_handling_minutes": 12.7,
+    "current_unit_cost_usd": 11.45
+   },
+   {
+    "kind": "vendor_bank_change",
+    "entity_type": "invoice",
+    "total": 660,
+    "open": 60,
+    "resolved": 600,
+    "by_month": {
+     "2025-10": 51,
+     "2025-11": 62,
+     "2025-12": 58,
+     "2026-01": 61,
+     "2026-02": 56,
+     "2026-03": 66,
+     "2026-04": 57,
+     "2026-05": 55,
+     "2026-06": 55,
+     "2026-07": 40,
+     "2026-08": 39,
+     "2026-09": 60
+    },
+    "avg_handling_minutes": 5.5,
+    "current_unit_cost_usd": 4.94
+   }
+  ]
+ }
+}

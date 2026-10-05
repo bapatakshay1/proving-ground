@@ -245,7 +245,8 @@ def operate(admission=None, replay=None, pricing=None):
     def run(kx):
         kind, x = kx
         actor = f"agent:solver:{x['id']}"
-        t = agents.solve({k: x[k] for k in ("id", "kind", "entity_type", "entity_id", "opened_at")}, live, actor)
+        model = pr["workflows"][kind].get("solver_model")
+        t = agents.solve({k: x[k] for k in ("id", "kind", "entity_type", "entity_id", "opened_at")}, live, actor, model=model)
         cs = policy.connect(lp)
         claimed = t["ended_by"] == "resolve_exception"
         v = policy.verify(cs, kind, x["entity_id"], actor=actor, exception_id=x["id"]) if claimed else None
@@ -263,7 +264,7 @@ def operate(admission=None, replay=None, pricing=None):
                         json.dumps({"ended_by": t["ended_by"], "failures": (v or {}).get("failures"), "final": t["final"]})))
         cs.commit()
         cs.close()
-        return {"exception_id": x["id"], "kind": kind, "ended_by": t["ended_by"], "billed": billed, "price": price if billed else 0.0,
+        return {"exception_id": x["id"], "kind": kind, "model": model, "ended_by": t["ended_by"], "billed": billed, "price": price if billed else 0.0,
                 "failures": (v or {}).get("failures", []), "escalation_reason": t["final"] if t["ended_by"] == "escalate_exception" else None,
                 "usd": t["usd"], "steps": len(t["steps"])}
 
@@ -277,11 +278,12 @@ def operate(admission=None, replay=None, pricing=None):
         rs = [r for r in results if r["kind"] == kind]
         n, b = len(rs), sum(r["billed"] for r in rs)
         live_rate = b / n
-        gap = (rep["by_kind"][kind]["pass_rate"] - live_rate) * 100
+        replay_rate = pr["workflows"][kind]["pass_rate"]  # the priced tier's replay rate
+        gap = (replay_rate - live_rate) * 100
         if gap > SHADOW_GAP_MAX:
             out["stop_rule"]["tripped"].append(kind)
-        out["by_kind"][kind] = {"n": n, "billed": b, "metered_pass_rate": round(live_rate, 3), "billed_usd": round(sum(r["price"] for r in rs), 2),
-                                "replay_pass_rate": rep["by_kind"][kind]["pass_rate"], "gap_pts": round(gap, 1),
+        out["by_kind"][kind] = {"n": n, "billed": b, "model": pr["workflows"][kind].get("solver_model"), "metered_pass_rate": round(live_rate, 3),
+                                "billed_usd": round(sum(r["price"] for r in rs), 2), "replay_pass_rate": replay_rate, "gap_pts": round(gap, 1),
                                 "routed_to_human": [{"exception_id": r["exception_id"], "why": r["escalation_reason"] or ",".join(r["failures"]) or r["ended_by"]} for r in rs if not r["billed"]],
                                 "model_usd": round(sum(r["usd"] for r in rs), 4)}
     # return path: what the agents could not finish comes back as candidate work
@@ -304,8 +306,27 @@ def operate(admission=None, replay=None, pricing=None):
 
 # ---------------- pricing ----------------
 
+def tiers():
+    """All solver tiers that have replayed the held-out cases: model -> by_kind."""
+    out = {}
+    for f in sorted(OUT.glob("replay_*.json")):
+        d = json.loads(f.read_text())
+        out[d["model"]] = d["by_kind"]
+    return out
+
+
+def choose_tier(kind, default_model, all_tiers):
+    """Cheapest tier whose replay pass rate meets the contract bar; else the best-passing tier."""
+    ok = [(t[kind]["mean_usd"], m) for m, t in all_tiers.items() if kind in t and t[kind]["pass_rate"] >= CONTRACT_BAR]
+    if ok:
+        return min(ok)[1]
+    best = [(t[kind]["pass_rate"], -t[kind]["mean_usd"], m) for m, t in all_tiers.items() if kind in t]
+    return max(best)[2] if best else default_model
+
+
 def price(candidates=None, admission=None, replay=None):
     cands, adm, rep = candidates or jload("candidates.json"), admission or jload("admission.json"), replay or jload("replay.json")
+    all_tiers = tiers() or {rep["model"]: rep["by_kind"]}
     rec = {c["kind"]: c for c in cands["candidates"] if c.get("records")}
     out = {"assumptions": {"price_fraction_of_current_cost": PRICE_FRACTION, "serve_overhead_on_model_spend": SERVE_OVERHEAD, "contract_bar": CONTRACT_BAR,
                            "annual_minimum_fraction": ANNUAL_MIN_FRACTION, "ops_allowance_per_outcome_usd": OPS_ALLOWANCE,
@@ -313,7 +334,8 @@ def price(candidates=None, admission=None, replay=None):
     for kind, w in adm["workflows"].items():
         if not w.get("admitted"):
             continue
-        r, rp = rec[kind]["records"], rep["by_kind"][kind]
+        model = choose_tier(kind, rep["model"], all_tiers)
+        r, rp = rec[kind]["records"], all_tiers.get(model, rep["by_kind"])[kind]
         cost_now = r["current_unit_cost_usd"]
         p = round(cost_now * PRICE_FRACTION, 2)
         # model spend is paid on every attempt but only verified outcomes bill, so cost to serve is per verified outcome
@@ -321,6 +343,7 @@ def price(candidates=None, admission=None, replay=None):
         serve = round(per_verified * (1 + SERVE_OVERHEAD) + OPS_ALLOWANCE, 4)
         vol = r["monthly_volume"]
         out["workflows"][kind] = {
+            "solver_model": model, "tiers_considered": {m: t[kind]["pass_rate"] for m, t in all_tiers.items() if kind in t},
             "monthly_volume": vol, "avg_handling_minutes": r["avg_handling_minutes"], "current_unit_cost_usd": cost_now,
             "price_per_outcome_usd": p, "pass_rate": rp["pass_rate"], "pass_rate_ci95": rp["ci95"],
             "measured_model_cost_per_attempt_usd": rp["mean_usd"], "model_cost_per_verified_outcome_usd": round(per_verified, 4), "cost_to_serve_usd": serve,
@@ -345,22 +368,21 @@ def packet():
               "needs_judgement": rec.get(kind, {}).get("needs_judgement"), "evidence": rec.get(kind, {}).get("records"),
               "verifier": w.get("verifier"), "admission": {k: v for k, v in w.items() if k not in ("verifier",)}}
         if w.get("admitted"):
-            wf["replay"] = rep["by_kind"][kind]
+            model = pr["workflows"][kind].get("solver_model", rep["model"])
+            wf["replay"] = tiers().get(model, rep["by_kind"])[kind]
+            wf["replay"]["model"] = model
             wf["pricing"] = pr["workflows"][kind]
             wf["live"] = op["by_kind"].get(kind)
         workflows.append(wf)
     admitted = [w for w in workflows if w["admission"]["admitted"]]
     spend = (cands.get("usd") or 0.0) + sum(r["usd"] for w in adm["workflows"].values() for r in (w.get("llm_breaker") or {}).get("runs", []))
     spend += sum(c["usd"] for f in OUT.glob("replay_*.json") for c in json.loads(f.read_text())["cases"]) + sum(r["usd"] for r in op["cases"])
-    tiers = {}
-    for f in sorted(OUT.glob("replay_*.json")):
-        d = json.loads(f.read_text())
-        tiers[d["model"]] = {k: {"pass_rate": v["pass_rate"], "ci95": v["ci95"], "mean_usd": v["mean_usd"], "mean_steps": v["mean_steps"], "failure_modes": v["failure_modes"]}
-                             for k, v in d["by_kind"].items()}
+    tier_table = {m: {k: {"pass_rate": v["pass_rate"], "ci95": v["ci95"], "mean_usd": v["mean_usd"], "mean_steps": v["mean_steps"], "failure_modes": v["failure_modes"]}
+                      for k, v in by_kind.items()} for m, by_kind in tiers().items()}
     p = {"generated_at": dt.datetime.now(dt.timezone.utc).isoformat(), "company": settings.get("company"), "as_of": settings.get("as_of"),
          "models": llm.MODELS, "thresholds": {**adm["thresholds"], **pr["assumptions"], "shadow_gap_max_pts": SHADOW_GAP_MAX},
          "gates": {"five_verifiers_survive_breaker": len(admitted) >= 5, "admitted_count": len(admitted), "stop_rule_tripped": op["stop_rule"]["tripped"]},
-         "workflows": workflows, "solver_tiers": tiers, "new_candidate_tasks": op["new_candidate_tasks"],
+         "workflows": workflows, "solver_tiers": tier_table, "new_candidate_tasks": op["new_candidate_tasks"],
          "totals": {"projected_monthly_revenue_usd": round(sum(w["pricing"]["projected_monthly_revenue_usd"] for w in admitted), 2),
                     "live_billed_usd": op["billing_total_usd"], "discovery_model_spend_usd": round(spend, 4)}}
     jdump("proof_packet.json", p)
@@ -374,16 +396,16 @@ def render_md(p):
          f"breaker `{p['models']['breaker']}`, verifier = code keyed to the system of record.", "",
          f"**Gate — at least five verifiers survive the breaker: {'PASS' if p['gates']['five_verifiers_survive_breaker'] else 'FAIL'}** "
          f"({p['gates']['admitted_count']} admitted). Stop rule tripped: {p['gates']['stop_rule_tripped'] or 'none'}.", "",
-         "| Workflow | Monthly vol | Unit cost now | Admitted | Replay pass (n=20) | Price/outcome | Cost to serve | Margin | Live metered | Proj. monthly rev |",
-         "|---|---|---|---|---|---|---|---|---|---|"]
+         "| Workflow | Monthly vol | Unit cost now | Admitted | Priced tier | Replay pass (n=20) | Price/outcome | Cost to serve | Margin | Live metered | Proj. monthly rev |",
+         "|---|---|---|---|---|---|---|---|---|---|---|"]
     for w in p["workflows"]:
         a, e = w["admission"], w.get("evidence") or {}
         if a["admitted"]:
             r, pr, lv = w["replay"], w["pricing"], w.get("live") or {}
-            L.append(f"| {w['kind']} | {e.get('monthly_volume')} | ${e.get('current_unit_cost_usd')} | yes | {r['pass_rate']:.0%} {r['ci95']} | ${pr['price_per_outcome_usd']} | "
+            L.append(f"| {w['kind']} | {e.get('monthly_volume')} | ${e.get('current_unit_cost_usd')} | yes | `{pr['solver_model'].split('/')[-1]}` | {r['pass_rate']:.0%} {r['ci95']} | ${pr['price_per_outcome_usd']} | "
                      f"${pr['cost_to_serve_usd']:.3f} | {pr['gross_margin']:.0%} | {lv.get('metered_pass_rate', 0):.0%} ({lv.get('billed')}/{lv.get('n')}) | ${pr['projected_monthly_revenue_usd']} |")
         else:
-            L.append(f"| {w['kind']} | {e.get('monthly_volume')} | ${e.get('current_unit_cost_usd')} | **no** | — | — | — | — | — | — |")
+            L.append(f"| {w['kind']} | {e.get('monthly_volume')} | ${e.get('current_unit_cost_usd')} | **no** | — | — | — | — | — | — | — |")
     L.append("")
     for w in p["workflows"]:
         a = w["admission"]
@@ -397,7 +419,7 @@ def render_md(p):
               f"→ **{'ADMITTED' if a['admitted'] else 'NOT ADMITTED'}**" + (f": {a['reason']}" if a["reason"] else "") + "", ""]
         if a["admitted"]:
             r, pr, lv = w["replay"], w["pricing"], w.get("live") or {}
-            L += [f"**Replay on {r['n']} held-out past cases.** Pass rate {r['pass_rate']:.0%} (95% CI {r['ci95'][0]:.0%}–{r['ci95'][1]:.0%}); "
+            L += [f"**Replay on {r['n']} held-out past cases** (priced tier `{r.get('model', p['models']['solver'])}`). Pass rate {r['pass_rate']:.0%} (95% CI {r['ci95'][0]:.0%}–{r['ci95'][1]:.0%}); "
                   f"agrees with the clerk's recorded outcome {r['agrees_with_history']:.0%} ({r['history_overrides_in_sample']} clerk overrides in sample). "
                   f"Mean {r['mean_steps']} tool calls, ${r['mean_usd']:.4f} model spend per case.", "",
                   "Known failure modes: " + (", ".join(f"{k} ×{v}" for k, v in r["failure_modes"].items()) or "none observed") + ".", "",
@@ -417,7 +439,7 @@ def render_md(p):
         L += ["## Solver tiers on the same held-out cases", "", "| Model | " + " | ".join(kinds) + " |", "|---|" + "---|" * len(kinds)]
         for m, t in p["solver_tiers"].items():
             L.append(f"| `{m}` | " + " | ".join(f"{t[k]['pass_rate']:.0%} @ ${t[k]['mean_usd']:.4f}" if k in t else "—" for k in kinds) + " |")
-        L += ["", f"Priced tier: `{p['models']['solver']}`. Pass rate @ measured model spend per case.", ""]
+        L += ["", "Each workflow is priced on the cheapest tier that meets the contract bar (else the best-passing tier). Pass rate @ measured model spend per attempt.", ""]
     L += ["## Return path — what came back as candidate work", ""]
     L += [f"- {t['pattern']} (×{t['count']})" for t in p["new_candidate_tasks"]] or ["- nothing routed to humans"]
     t = p["totals"]

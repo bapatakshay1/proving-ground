@@ -1,0 +1,3888 @@
+{
+ "model": "openai/gpt-4.1",
+ "cases": [
+  {
+   "exception_id": 2666,
+   "kind": "unmatched_payment",
+   "entity_id": 3535,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": false,
+   "failures": [
+    "invoice_not_paid:7327",
+    "out_of_scope_write:invoice:5333:mark_paid",
+    "wrong_match:[5333, 7328]!=[7327, 7328]"
+   ],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3535,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7327,
+     7328
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     5333,
+     7328
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": false,
+   "history_was_override": false,
+   "steps": 8,
+   "usd": 0.02631,
+   "tokens": 20909,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2667,
+   "kind": "unmatched_payment",
+   "entity_id": 3536,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3536,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7329
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7329
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01389,
+   "tokens": 12470,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2691,
+   "kind": "unmatched_payment",
+   "entity_id": 3560,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3560,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7357,
+     7358
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7357,
+     7358
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": false,
+   "history_was_override": true,
+   "steps": 12,
+   "usd": 0.04121,
+   "tokens": 35293,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2733,
+   "kind": "unmatched_payment",
+   "entity_id": 3602,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3602,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7409
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7409
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01845,
+   "tokens": 12899,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2748,
+   "kind": "unmatched_payment",
+   "entity_id": 3617,
+   "ended_by": "max_steps",
+   "claimed": false,
+   "passed": false,
+   "failures": [],
+   "expected": null,
+   "actual": null,
+   "agrees_with_history": false,
+   "history_was_override": false,
+   "steps": 14,
+   "usd": 0.05141,
+   "tokens": 49865,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2749,
+   "kind": "unmatched_payment",
+   "entity_id": 3618,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3618,
+    "status": "flagged",
+    "flag_reason_contains": "no_matching"
+   },
+   "actual": {
+    "status": "flagged",
+    "matched_invoice_ids": [],
+    "flag_reason": "no_matching_invoice"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 10,
+   "usd": 0.02699,
+   "tokens": 24972,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "calculate",
+    "calculate",
+    "flag_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2771,
+   "kind": "unmatched_payment",
+   "entity_id": 3640,
+   "ended_by": "max_steps",
+   "claimed": false,
+   "passed": false,
+   "failures": [],
+   "expected": null,
+   "actual": null,
+   "agrees_with_history": false,
+   "history_was_override": false,
+   "steps": 14,
+   "usd": 0.05586,
+   "tokens": 54793,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2772,
+   "kind": "unmatched_payment",
+   "entity_id": 3641,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": false,
+   "failures": [
+    "out_of_scope_write:invoice:4112:mark_paid",
+    "out_of_scope_write:invoice:6775:mark_paid",
+    "wrong_status:reconciled!=flagged"
+   ],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3641,
+    "status": "flagged",
+    "flag_reason_contains": "no_matching"
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     4112,
+     6775
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": false,
+   "history_was_override": false,
+   "steps": 9,
+   "usd": 0.02783,
+   "tokens": 30033,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "calculate",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2879,
+   "kind": "unmatched_payment",
+   "entity_id": 3748,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3748,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7568
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7568
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01393,
+   "tokens": 12483,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2890,
+   "kind": "unmatched_payment",
+   "entity_id": 3759,
+   "ended_by": "max_steps",
+   "claimed": false,
+   "passed": false,
+   "failures": [],
+   "expected": null,
+   "actual": null,
+   "agrees_with_history": false,
+   "history_was_override": false,
+   "steps": 16,
+   "usd": 0.08569,
+   "tokens": 115910,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2915,
+   "kind": "unmatched_payment",
+   "entity_id": 3784,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3784,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7609
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7609
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01734,
+   "tokens": 12460,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2999,
+   "kind": "unmatched_payment",
+   "entity_id": 3868,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3868,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7702
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7702
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.02258,
+   "tokens": 12475,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 3021,
+   "kind": "unmatched_payment",
+   "entity_id": 3890,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3890,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7727
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7727
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01705,
+   "tokens": 12487,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 3083,
+   "kind": "unmatched_payment",
+   "entity_id": 3952,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": false,
+   "failures": [
+    "out_of_scope_write:invoice:6185:mark_paid",
+    "out_of_scope_write:invoice:6186:mark_paid",
+    "wrong_status:reconciled!=flagged"
+   ],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3952,
+    "status": "flagged",
+    "flag_reason_contains": "no_matching"
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     6185,
+     6186
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": false,
+   "history_was_override": false,
+   "steps": 8,
+   "usd": 0.03644,
+   "tokens": 30218,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 3127,
+   "kind": "unmatched_payment",
+   "entity_id": 3996,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 3996,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7854,
+     7855
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7854,
+     7855
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 9,
+   "usd": 0.04832,
+   "tokens": 35780,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "calculate",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 3143,
+   "kind": "unmatched_payment",
+   "entity_id": 4012,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": false,
+   "failures": [
+    "out_of_scope_write:invoice:7045:mark_paid",
+    "out_of_scope_write:invoice:7875:mark_paid",
+    "wrong_status:reconciled!=flagged"
+   ],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 4012,
+    "status": "flagged",
+    "flag_reason_contains": "no_matching"
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7045,
+     7875
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": false,
+   "history_was_override": false,
+   "steps": 9,
+   "usd": 0.03611,
+   "tokens": 30399,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "calculate",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 3147,
+   "kind": "unmatched_payment",
+   "entity_id": 4016,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 4016,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7879,
+     7880
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7879,
+     7880
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 8,
+   "usd": 0.06215,
+   "tokens": 33087,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 3178,
+   "kind": "unmatched_payment",
+   "entity_id": 4047,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 4047,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7913
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7913
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.0229,
+   "tokens": 12467,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 3180,
+   "kind": "unmatched_payment",
+   "entity_id": 4049,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": false,
+   "failures": [
+    "out_of_scope_write:invoice:4518:mark_paid",
+    "out_of_scope_write:invoice:5172:mark_paid",
+    "wrong_status:reconciled!=flagged"
+   ],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 4049,
+    "status": "flagged",
+    "flag_reason_contains": "no_matching"
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     4518,
+     5172
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": false,
+   "history_was_override": false,
+   "steps": 15,
+   "usd": 0.07667,
+   "tokens": 81132,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "search_invoices",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 3190,
+   "kind": "unmatched_payment",
+   "entity_id": 4059,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "bank_transaction",
+    "id": 4059,
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7926
+    ]
+   },
+   "actual": {
+    "status": "reconciled",
+    "matched_invoice_ids": [
+     7926
+    ],
+    "flag_reason": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01733,
+   "tokens": 12466,
+   "tools": [
+    "get_policy",
+    "get_bank_transaction",
+    "search_vendors",
+    "search_invoices",
+    "match_bank_transaction",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2009,
+   "kind": "missing_po",
+   "entity_id": 6669,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6669,
+    "status": "approved",
+    "approved_amount": 39955.55,
+    "po_number": "PO-16486"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 39955.55,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16486"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.02194,
+   "tokens": 13960,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2030,
+   "kind": "missing_po",
+   "entity_id": 6690,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6690,
+    "status": "approved",
+    "approved_amount": 139.55,
+    "po_number": "PO-16507"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 139.55,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16507"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01403,
+   "tokens": 12925,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2050,
+   "kind": "missing_po",
+   "entity_id": 6710,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6710,
+    "status": "approved",
+    "approved_amount": 13534.27,
+    "po_number": "PO-16527"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 13534.27,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16527"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.02027,
+   "tokens": 16473,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "get_po",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2090,
+   "kind": "missing_po",
+   "entity_id": 6750,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6750,
+    "status": "on_hold",
+    "hold_reason": "po_required"
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "po_required",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01532,
+   "tokens": 10205,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2132,
+   "kind": "missing_po",
+   "entity_id": 6792,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6792,
+    "status": "approved",
+    "approved_amount": 2538.85,
+    "po_number": "PO-16609"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 2538.85,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16609"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01405,
+   "tokens": 12937,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2135,
+   "kind": "missing_po",
+   "entity_id": 6795,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6795,
+    "status": "on_hold",
+    "hold_reason": "po_required"
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "po_required",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.02006,
+   "tokens": 12861,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "search_pos",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2177,
+   "kind": "missing_po",
+   "entity_id": 6837,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6837,
+    "status": "approved",
+    "approved_amount": 6358.46,
+    "po_number": "PO-16654"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 6358.46,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16654"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.02355,
+   "tokens": 12923,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2197,
+   "kind": "missing_po",
+   "entity_id": 6857,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6857,
+    "status": "approved",
+    "approved_amount": 46594.34,
+    "po_number": "PO-16674"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 46594.34,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16674"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.0217,
+   "tokens": 13305,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2200,
+   "kind": "missing_po",
+   "entity_id": 6860,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6860,
+    "status": "approved",
+    "approved_amount": 1120.56,
+    "po_number": "PO-16677"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 1120.56,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16677"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01748,
+   "tokens": 12935,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2219,
+   "kind": "missing_po",
+   "entity_id": 6879,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6879,
+    "status": "approved",
+    "approved_amount": 8821.16,
+    "po_number": "PO-16696"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 8821.16,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16696"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.02171,
+   "tokens": 13302,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2232,
+   "kind": "missing_po",
+   "entity_id": 6892,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6892,
+    "status": "approved",
+    "approved_amount": 8612.33,
+    "po_number": "PO-16709"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 8612.33,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16709"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01445,
+   "tokens": 13310,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2245,
+   "kind": "missing_po",
+   "entity_id": 6905,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6905,
+    "status": "on_hold",
+    "hold_reason": "po_required"
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "po_required",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.02007,
+   "tokens": 13892,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "search_pos",
+    "get_po",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2272,
+   "kind": "missing_po",
+   "entity_id": 6932,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6932,
+    "status": "on_hold",
+    "hold_reason": "po_required"
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "po_required",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.02083,
+   "tokens": 12853,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "search_pos",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2276,
+   "kind": "missing_po",
+   "entity_id": 6936,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6936,
+    "status": "on_hold",
+    "hold_reason": "po_required"
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "po_required",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01736,
+   "tokens": 12862,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "search_pos",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2289,
+   "kind": "missing_po",
+   "entity_id": 6949,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6949,
+    "status": "approved",
+    "approved_amount": 57749.9,
+    "po_number": "PO-16766"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 57749.9,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16766"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.02312,
+   "tokens": 16450,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "get_po",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2290,
+   "kind": "missing_po",
+   "entity_id": 6950,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6950,
+    "status": "approved",
+    "approved_amount": 20335.67,
+    "po_number": "PO-16767"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 20335.67,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16767"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01807,
+   "tokens": 13304,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2291,
+   "kind": "missing_po",
+   "entity_id": 6951,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6951,
+    "status": "approved",
+    "approved_amount": 7001.44,
+    "po_number": "PO-16768"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 7001.44,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16768"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.02169,
+   "tokens": 13290,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2347,
+   "kind": "missing_po",
+   "entity_id": 7007,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 7007,
+    "status": "approved",
+    "approved_amount": 12842.63,
+    "po_number": "PO-16824"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 12842.63,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16824"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.02117,
+   "tokens": 13263,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2439,
+   "kind": "missing_po",
+   "entity_id": 7099,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 7099,
+    "status": "approved",
+    "approved_amount": 10449.5,
+    "po_number": "PO-16916"
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 10449.5,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16916"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01707,
+   "tokens": 13285,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "link_po",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 2490,
+   "kind": "missing_po",
+   "entity_id": 7150,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 7150,
+    "status": "on_hold",
+    "hold_reason": "po_required"
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "po_required",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": null
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.0154,
+   "tokens": 10225,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_pos",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 661,
+   "kind": "quantity_mismatch",
+   "entity_id": 4661,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": false,
+   "failures": [
+    "wrong_status:on_hold!=approved"
+   ],
+   "expected": {
+    "entity": "invoice",
+    "id": 4661,
+    "status": "approved",
+    "approved_amount": 11231.08
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "awaiting_receipt",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14661"
+   },
+   "agrees_with_history": false,
+   "history_was_override": false,
+   "steps": 4,
+   "usd": 0.01094,
+   "tokens": 8315,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 695,
+   "kind": "quantity_mismatch",
+   "entity_id": 4695,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4695,
+    "status": "approved",
+    "approved_amount": 1228.31
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 1228.31,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14695"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 9,
+   "usd": 0.02361,
+   "tokens": 19718,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 700,
+   "kind": "quantity_mismatch",
+   "entity_id": 4700,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4700,
+    "status": "approved",
+    "approved_amount": 3425.56
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 3425.56,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14700"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01412,
+   "tokens": 13182,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 717,
+   "kind": "quantity_mismatch",
+   "entity_id": 4717,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4717,
+    "status": "approved",
+    "approved_amount": 1127.83
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 1127.83,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14717"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01688,
+   "tokens": 13196,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 749,
+   "kind": "quantity_mismatch",
+   "entity_id": 4749,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4749,
+    "status": "approved",
+    "approved_amount": 5085.39
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 5085.39,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14749"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01656,
+   "tokens": 11419,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 874,
+   "kind": "quantity_mismatch",
+   "entity_id": 4874,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4874,
+    "status": "approved",
+    "approved_amount": 47862.47
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 47862.47,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14874"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.02102,
+   "tokens": 13735,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 948,
+   "kind": "quantity_mismatch",
+   "entity_id": 4948,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4948,
+    "status": "approved",
+    "approved_amount": 21396.45
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 21396.45,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14948"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 9,
+   "usd": 0.02276,
+   "tokens": 19649,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 958,
+   "kind": "quantity_mismatch",
+   "entity_id": 4958,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4958,
+    "status": "approved",
+    "approved_amount": 516.46
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 516.46,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14958"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.02125,
+   "tokens": 13189,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 965,
+   "kind": "quantity_mismatch",
+   "entity_id": 4965,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4965,
+    "status": "approved",
+    "approved_amount": 21607.73
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 21607.73,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14965"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01369,
+   "tokens": 11278,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 968,
+   "kind": "quantity_mismatch",
+   "entity_id": 4968,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4968,
+    "status": "approved",
+    "approved_amount": 10798.5
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 10798.5,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14968"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01675,
+   "tokens": 11037,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1017,
+   "kind": "quantity_mismatch",
+   "entity_id": 5017,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5017,
+    "status": "on_hold",
+    "hold_reason": "awaiting_receipt"
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "awaiting_receipt",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15017"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 4,
+   "usd": 0.0133,
+   "tokens": 8067,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1021,
+   "kind": "quantity_mismatch",
+   "entity_id": 5021,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5021,
+    "status": "on_hold",
+    "hold_reason": "awaiting_receipt"
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "awaiting_receipt",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15021"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 4,
+   "usd": 0.01367,
+   "tokens": 8324,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1088,
+   "kind": "quantity_mismatch",
+   "entity_id": 5088,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5088,
+    "status": "approved",
+    "approved_amount": 243.02
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 243.02,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15088"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01609,
+   "tokens": 15864,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1167,
+   "kind": "quantity_mismatch",
+   "entity_id": 5167,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5167,
+    "status": "approved",
+    "approved_amount": 890.28
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 890.28,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15167"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01739,
+   "tokens": 11433,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1176,
+   "kind": "quantity_mismatch",
+   "entity_id": 5176,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5176,
+    "status": "approved",
+    "approved_amount": 733.53
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 733.53,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15176"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.02265,
+   "tokens": 16561,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1185,
+   "kind": "quantity_mismatch",
+   "entity_id": 5185,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5185,
+    "status": "approved",
+    "approved_amount": 34262.25
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 34262.25,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15185"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01997,
+   "tokens": 17339,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1188,
+   "kind": "quantity_mismatch",
+   "entity_id": 5188,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5188,
+    "status": "approved",
+    "approved_amount": 337.02
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 337.02,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15188"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 4,
+   "usd": 0.01215,
+   "tokens": 8414,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1199,
+   "kind": "quantity_mismatch",
+   "entity_id": 5199,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5199,
+    "status": "approved",
+    "approved_amount": 2126.05
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 2126.05,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15199"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.0161,
+   "tokens": 10649,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1224,
+   "kind": "quantity_mismatch",
+   "entity_id": 5224,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5224,
+    "status": "on_hold",
+    "hold_reason": "awaiting_receipt"
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "awaiting_receipt",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15224"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 4,
+   "usd": 0.0133,
+   "tokens": 8071,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1236,
+   "kind": "quantity_mismatch",
+   "entity_id": 5236,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5236,
+    "status": "on_hold",
+    "hold_reason": "awaiting_receipt"
+   },
+   "actual": {
+    "status": "on_hold",
+    "approved_amount": null,
+    "hold_reason": "awaiting_receipt",
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15236"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 4,
+   "usd": 0.01427,
+   "tokens": 8807,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "hold_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 13,
+   "kind": "price_mismatch",
+   "entity_id": 4013,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4013,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14013"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01948,
+   "tokens": 15828,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 36,
+   "kind": "price_mismatch",
+   "entity_id": 4036,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4036,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14036"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.02037,
+   "tokens": 16501,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 45,
+   "kind": "price_mismatch",
+   "entity_id": 4045,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4045,
+    "status": "approved",
+    "approved_amount": 8019.36
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 8019.36,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14045"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01629,
+   "tokens": 14226,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 55,
+   "kind": "price_mismatch",
+   "entity_id": 4055,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4055,
+    "status": "approved",
+    "approved_amount": 38515.13
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 38515.13,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14055"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01653,
+   "tokens": 11870,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 73,
+   "kind": "price_mismatch",
+   "entity_id": 4073,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4073,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14073"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01923,
+   "tokens": 15745,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 78,
+   "kind": "price_mismatch",
+   "entity_id": 4078,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4078,
+    "status": "approved",
+    "approved_amount": 863.62
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 863.62,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14078"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01574,
+   "tokens": 15778,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 79,
+   "kind": "price_mismatch",
+   "entity_id": 4079,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4079,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14079"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01661,
+   "tokens": 16536,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 83,
+   "kind": "price_mismatch",
+   "entity_id": 4083,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4083,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14083"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.0254,
+   "tokens": 15756,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 108,
+   "kind": "price_mismatch",
+   "entity_id": 4108,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4108,
+    "status": "approved",
+    "approved_amount": 22651.02
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 22651.02,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14108"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01351,
+   "tokens": 11442,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 137,
+   "kind": "price_mismatch",
+   "entity_id": 4137,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4137,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14137"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.02132,
+   "tokens": 17617,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 167,
+   "kind": "price_mismatch",
+   "entity_id": 4167,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4167,
+    "status": "approved",
+    "approved_amount": 2405.45
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 2405.45,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14167"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01758,
+   "tokens": 13207,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 255,
+   "kind": "price_mismatch",
+   "entity_id": 4255,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4255,
+    "status": "approved",
+    "approved_amount": 2715.38
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 2715.38,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14255"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01557,
+   "tokens": 11002,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 311,
+   "kind": "price_mismatch",
+   "entity_id": 4311,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4311,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14311"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.02411,
+   "tokens": 16546,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 342,
+   "kind": "price_mismatch",
+   "entity_id": 4342,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4342,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14342"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01795,
+   "tokens": 17991,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 368,
+   "kind": "price_mismatch",
+   "entity_id": 4368,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4368,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14368"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01586,
+   "tokens": 15831,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 469,
+   "kind": "price_mismatch",
+   "entity_id": 4469,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4469,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14469"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01929,
+   "tokens": 15763,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 493,
+   "kind": "price_mismatch",
+   "entity_id": 4493,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4493,
+    "status": "approved",
+    "approved_amount": 15440.36
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 15440.36,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14493"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 7,
+   "usd": 0.01996,
+   "tokens": 17283,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 528,
+   "kind": "price_mismatch",
+   "entity_id": 4528,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4528,
+    "status": "disputed",
+    "dispute_reason_contains": "price"
+   },
+   "actual": {
+    "status": "disputed",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": "price variance",
+    "po_number": "PO-14528"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 8,
+   "usd": 0.01826,
+   "tokens": 14178,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "calculate",
+    "calculate",
+    "calculate",
+    "dispute_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 548,
+   "kind": "price_mismatch",
+   "entity_id": 4548,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4548,
+    "status": "approved",
+    "approved_amount": 417.84
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 417.84,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14548"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01498,
+   "tokens": 10567,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 597,
+   "kind": "price_mismatch",
+   "entity_id": 4597,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 4597,
+    "status": "approved",
+    "approved_amount": 1224.3
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 1224.3,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-14597"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.0125,
+   "tokens": 10614,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "calculate",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1348,
+   "kind": "possible_duplicate",
+   "entity_id": 5376,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5376,
+    "status": "rejected",
+    "reject_reason_contains": "duplicate"
+   },
+   "actual": {
+    "status": "rejected",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": "duplicate of 5375",
+    "dispute_reason": null,
+    "po_number": "PO-15361"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01726,
+   "tokens": 11435,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "reject_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1359,
+   "kind": "possible_duplicate",
+   "entity_id": 5398,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5398,
+    "status": "rejected",
+    "reject_reason_contains": "duplicate"
+   },
+   "actual": {
+    "status": "rejected",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": "duplicate of 5397",
+    "dispute_reason": null,
+    "po_number": "PO-15378"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.02032,
+   "tokens": 11436,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "reject_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1377,
+   "kind": "possible_duplicate",
+   "entity_id": 5434,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5434,
+    "status": "rejected",
+    "reject_reason_contains": "duplicate"
+   },
+   "actual": {
+    "status": "rejected",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": "duplicate of 5433",
+    "dispute_reason": null,
+    "po_number": "PO-15407"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.0143,
+   "tokens": 12164,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "reject_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1411,
+   "kind": "possible_duplicate",
+   "entity_id": 5502,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5502,
+    "status": "approved",
+    "approved_amount": 1263.67
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 1263.67,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15467"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 8,
+   "usd": 0.0244,
+   "tokens": 19670,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1436,
+   "kind": "possible_duplicate",
+   "entity_id": 5552,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5552,
+    "status": "rejected",
+    "reject_reason_contains": "duplicate"
+   },
+   "actual": {
+    "status": "rejected",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": "duplicate of 5551",
+    "dispute_reason": null,
+    "po_number": "PO-15509"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01711,
+   "tokens": 12193,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "reject_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1455,
+   "kind": "possible_duplicate",
+   "entity_id": 5590,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5590,
+    "status": "rejected",
+    "reject_reason_contains": "duplicate"
+   },
+   "actual": {
+    "status": "rejected",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": "duplicate of 5589",
+    "dispute_reason": null,
+    "po_number": "PO-15543"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.01627,
+   "tokens": 14590,
+   "tools": [
+    "get_policy",
+    "get_exception",
+    "get_invoice",
+    "search_invoices",
+    "reject_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1469,
+   "kind": "possible_duplicate",
+   "entity_id": 5618,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5618,
+    "status": "rejected",
+    "reject_reason_contains": "duplicate"
+   },
+   "actual": {
+    "status": "rejected",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": "duplicate of 5617",
+    "dispute_reason": null,
+    "po_number": "PO-15571"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.02054,
+   "tokens": 11057,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "reject_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1511,
+   "kind": "possible_duplicate",
+   "entity_id": 5702,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5702,
+    "status": "approved",
+    "approved_amount": 6082.27
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 6082.27,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15646"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 8,
+   "usd": 0.02746,
+   "tokens": 19630,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1603,
+   "kind": "possible_duplicate",
+   "entity_id": 5886,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 5886,
+    "status": "approved",
+    "approved_amount": 29159.96
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 29159.96,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15809"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 9,
+   "usd": 0.02468,
+   "tokens": 25628,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "get_invoice",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1670,
+   "kind": "possible_duplicate",
+   "entity_id": 6020,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6020,
+    "status": "rejected",
+    "reject_reason_contains": "duplicate"
+   },
+   "actual": {
+    "status": "rejected",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": "duplicate of 6019",
+    "dispute_reason": null,
+    "po_number": "PO-15924"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01273,
+   "tokens": 11082,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "reject_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1674,
+   "kind": "possible_duplicate",
+   "entity_id": 6028,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6028,
+    "status": "approved",
+    "approved_amount": 5011.5
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 5011.5,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15931"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 6,
+   "usd": 0.02377,
+   "tokens": 13738,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1709,
+   "kind": "possible_duplicate",
+   "entity_id": 6098,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6098,
+    "status": "approved",
+    "approved_amount": 40955.86
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 40955.86,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-15998"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 8,
+   "usd": 0.02853,
+   "tokens": 20387,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1758,
+   "kind": "possible_duplicate",
+   "entity_id": 6196,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6196,
+    "status": "approved",
+    "approved_amount": 60833.21
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 60833.21,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16081"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 10,
+   "usd": 0.04471,
+   "tokens": 29536,
+   "tools": [
+    "get_policy",
+    "get_exception",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "get_invoice",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1788,
+   "kind": "possible_duplicate",
+   "entity_id": 6256,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6256,
+    "status": "approved",
+    "approved_amount": 21327.6
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 21327.6,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16133"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 8,
+   "usd": 0.03399,
+   "tokens": 21262,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1811,
+   "kind": "possible_duplicate",
+   "entity_id": 6302,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6302,
+    "status": "approved",
+    "approved_amount": 23104.73
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 23104.73,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16170"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 9,
+   "usd": 0.03289,
+   "tokens": 26743,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "get_invoice",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1817,
+   "kind": "possible_duplicate",
+   "entity_id": 6314,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6314,
+    "status": "approved",
+    "approved_amount": 6475.43
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 6475.43,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16177"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 8,
+   "usd": 0.02832,
+   "tokens": 20563,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1842,
+   "kind": "possible_duplicate",
+   "entity_id": 6364,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6364,
+    "status": "rejected",
+    "reject_reason_contains": "duplicate"
+   },
+   "actual": {
+    "status": "rejected",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": "duplicate of 6363",
+    "dispute_reason": null,
+    "po_number": "PO-16222"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01783,
+   "tokens": 11811,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "reject_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1855,
+   "kind": "possible_duplicate",
+   "entity_id": 6390,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6390,
+    "status": "rejected",
+    "reject_reason_contains": "duplicate"
+   },
+   "actual": {
+    "status": "rejected",
+    "approved_amount": null,
+    "hold_reason": null,
+    "reject_reason": "duplicate of 6389",
+    "dispute_reason": null,
+    "po_number": "PO-16246"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 5,
+   "usd": 0.01625,
+   "tokens": 11793,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "reject_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1863,
+   "kind": "possible_duplicate",
+   "entity_id": 6406,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6406,
+    "status": "approved",
+    "approved_amount": 4562.09
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 4562.09,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16261"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 11,
+   "usd": 0.06515,
+   "tokens": 51374,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  },
+  {
+   "exception_id": 1871,
+   "kind": "possible_duplicate",
+   "entity_id": 6422,
+   "ended_by": "resolve_exception",
+   "claimed": true,
+   "passed": true,
+   "failures": [],
+   "expected": {
+    "entity": "invoice",
+    "id": 6422,
+    "status": "approved",
+    "approved_amount": 6326.62
+   },
+   "actual": {
+    "status": "approved",
+    "approved_amount": 6326.62,
+    "hold_reason": null,
+    "reject_reason": null,
+    "dispute_reason": null,
+    "po_number": "PO-16274"
+   },
+   "agrees_with_history": true,
+   "history_was_override": false,
+   "steps": 8,
+   "usd": 0.02505,
+   "tokens": 20380,
+   "tools": [
+    "get_policy",
+    "get_invoice",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "search_invoices",
+    "approve_invoice",
+    "resolve_exception"
+   ],
+   "final": null
+  }
+ ],
+ "by_kind": {
+  "quantity_mismatch": {
+   "n": 20,
+   "passed": 19,
+   "pass_rate": 0.95,
+   "ci95": [
+    0.764,
+    0.991
+   ],
+   "agrees_with_history": 0.95,
+   "history_overrides_in_sample": 0,
+   "failure_modes": {
+    "wrong_status": 1
+   },
+   "mean_usd": 0.0168,
+   "mean_steps": 5.8
+  },
+  "unmatched_payment": {
+   "n": 20,
+   "passed": 12,
+   "pass_rate": 0.6,
+   "ci95": [
+    0.387,
+    0.781
+   ],
+   "agrees_with_history": 0.55,
+   "history_overrides_in_sample": 1,
+   "failure_modes": {
+    "out_of_scope_write": 9,
+    "wrong_status": 4,
+    "not_finished:max_steps": 3,
+    "invoice_not_paid": 1,
+    "wrong_match": 1
+   },
+   "mean_usd": 0.0359,
+   "mean_steps": 9.1
+  },
+  "missing_po": {
+   "n": 20,
+   "passed": 20,
+   "pass_rate": 1.0,
+   "ci95": [
+    0.839,
+    1.0
+   ],
+   "agrees_with_history": 1.0,
+   "history_overrides_in_sample": 0,
+   "failure_modes": {},
+   "mean_usd": 0.019,
+   "mean_steps": 6.1
+  },
+  "price_mismatch": {
+   "n": 20,
+   "passed": 20,
+   "pass_rate": 1.0,
+   "ci95": [
+    0.839,
+    1.0
+   ],
+   "agrees_with_history": 1.0,
+   "history_overrides_in_sample": 0,
+   "failure_modes": {},
+   "mean_usd": 0.018,
+   "mean_steps": 6.5
+  },
+  "possible_duplicate": {
+   "n": 20,
+   "passed": 20,
+   "pass_rate": 1.0,
+   "ci95": [
+    0.839,
+    1.0
+   ],
+   "agrees_with_history": 1.0,
+   "history_overrides_in_sample": 0,
+   "failure_modes": {},
+   "mean_usd": 0.0256,
+   "mean_steps": 7.0
+  }
+ }
+}

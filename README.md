@@ -27,6 +27,21 @@ admitted only if (a) the verifier agrees with ≥90% of how humans actually reso
 blind strategy reaches 70% on it. `vendor_bank_change` is deliberately a fixed-rule control ("hold + flag"):
 the breaker passes it blind, so the gate screens it out of outcome pricing — that is the gate working.
 
+## What the run produced (`results/`, Oct 5 2026, $3.57 model spend)
+
+| Workflow | Admitted | Priced tier | Replay pass (n=20, 95% CI) | Price/outcome | Live metered |
+|---|---|---|---|---|---|
+| quantity_mismatch | yes | gpt-4.1-mini | 100% [84–100] | $4.58 | 7/8 |
+| price_mismatch | yes | gpt-4.1-mini | 95% [76–99] | $3.17 | 7/8 |
+| missing_po | yes | gpt-4.1-mini | 90% [70–97] | $5.22 | 8/8 |
+| possible_duplicate | yes | gpt-4.1 (mini: 60%) | 100% [84–100] | $2.02 | 8/8 |
+| unmatched_payment | yes | gpt-4.1 | 60% [39–78] — below contract bar | $5.72 | 6/8 |
+| vendor_bank_change | **screened** | — | blind "hold + flag" passes 100% | — | — |
+
+Gate passed (5 verifiers survived the breaker). The unmatched-payment result is the useful kind of
+failure: both tiers struggle with pair-sum reconciliation, and the packet says so instead of pricing it.
+Full packet: [`results/proof_packet.md`](results/proof_packet.md).
+
 ## Run it
 
 ```

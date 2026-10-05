@@ -216,7 +216,7 @@ tax, and the sum of any invoice pair - and confirm a candidate pair sums to the 
 verifier checks to the cent must come from calculate, not from mental math."""
 
 
-def solve(exception, sandbox, actor, model=None, max_steps=14):
+def solve(exception, sandbox, actor, model=None, max_steps=20):
     model = model or llm.MODELS["solver"]
     company = api("GET", "/settings", sandbox).get("company", "the customer")
     user = (f"Work exception #{exception['id']}: kind={exception['kind']}, entity_type={exception['entity_type']}, "

@@ -1,0 +1,750 @@
+{
+ "thresholds": {
+  "history_agreement_min": 0.9,
+  "blind_pass_max": 0.7
+ },
+ "workflows": {
+  "unmatched_payment": {
+   "admitted": true,
+   "reason": null,
+   "verifier": "Identify the vendor from the counterparty, then the approved unpaid invoice(s) dated on/before the transaction whose total(s) equal the amount (one invoice, else exactly one pair). Transaction must be 'reconciled' with exactly that invoice set and those invoices 'paid'. If no match exists: status 'flagged' with flag_reason containing 'no_matching'. Writes only to the transaction and the matched invoices.",
+   "history_agreement": 0.982,
+   "history_n": 600,
+   "blind_strategies": {
+    "resolve_only": 0.0,
+    "approve_full": 0.0,
+    "hold_generic": 0.0,
+    "hold_policy_reason": 0.0,
+    "reject_as_duplicate": 0.0,
+    "dispute_price": 0.0,
+    "flag_payment": 0.28
+   },
+   "best_blind": {
+    "strategy": "flag_payment",
+    "pass_rate": 0.28,
+    "n": 25,
+    "ci95": [
+     0.143,
+     0.476
+    ]
+   },
+   "llm_breaker": {
+    "model": "deepseek/deepseek-chat-v3-0324",
+    "n": 8,
+    "pass_rate": 0.0,
+    "runs": [
+     {
+      "exception_id": 2641,
+      "passed": false,
+      "failures": [
+       "wrong_status:flagged!=reconciled"
+      ],
+      "actions": [
+       "match_bank_transaction",
+       "flag_bank_transaction",
+       "resolve_exception"
+      ],
+      "usd": 0.00191
+     },
+     {
+      "exception_id": 2642,
+      "passed": false,
+      "failures": [
+       "wrong_status:flagged!=reconciled"
+      ],
+      "actions": [
+       "flag_bank_transaction",
+       "resolve_exception"
+      ],
+      "usd": 0.00119
+     },
+     {
+      "exception_id": 2643,
+      "passed": false,
+      "failures": [
+       "wrong_status:flagged!=reconciled"
+      ],
+      "actions": [
+       "flag_bank_transaction",
+       "resolve_exception"
+      ],
+      "usd": 0.00069
+     },
+     {
+      "exception_id": 2644,
+      "passed": false,
+      "failures": [
+       "wrong_status:flagged!=reconciled"
+      ],
+      "actions": [
+       "match_bank_transaction",
+       "match_bank_transaction",
+       "flag_bank_transaction",
+       "resolve_exception"
+      ],
+      "usd": 0.00267
+     },
+     {
+      "exception_id": 2645,
+      "passed": false,
+      "failures": [
+       "wrong_status:flagged!=reconciled"
+      ],
+      "actions": [
+       "flag_bank_transaction",
+       "resolve_exception"
+      ],
+      "usd": 0.0007
+     },
+     {
+      "exception_id": 2646,
+      "passed": false,
+      "failures": [
+       "wrong_status:flagged!=reconciled"
+      ],
+      "actions": [
+       "flag_bank_transaction",
+       "resolve_exception"
+      ],
+      "usd": 0.00067
+     },
+     {
+      "exception_id": 2647,
+      "passed": false,
+      "failures": [
+       "wrong_status:flagged!=reconciled"
+      ],
+      "actions": [
+       "flag_bank_transaction",
+       "resolve_exception"
+      ],
+      "usd": 0.00069
+     },
+     {
+      "exception_id": 2648,
+      "passed": false,
+      "failures": [
+       "wrong_status:flagged!=reconciled"
+      ],
+      "actions": [
+       "flag_bank_transaction",
+       "resolve_exception"
+      ],
+      "usd": 0.0007
+     }
+    ]
+   }
+  },
+  "missing_po": {
+   "admitted": true,
+   "reason": null,
+   "verifier": "Search the vendor's open POs for one whose lines cover every invoiced SKU at the same unit price with enough remaining quantity. Exactly one: invoice.po_number must equal it and status 'approved' with approved_amount == total. None: status 'on_hold' with hold_reason 'po_required'. No writes outside the invoice.",
+   "history_agreement": 1.0,
+   "history_n": 600,
+   "blind_strategies": {
+    "resolve_only": 0.0,
+    "approve_full": 0.0,
+    "hold_generic": 0.0,
+    "hold_policy_reason": 0.52,
+    "reject_as_duplicate": 0.0,
+    "dispute_price": 0.0,
+    "flag_payment": 0.0
+   },
+   "best_blind": {
+    "strategy": "hold_policy_reason",
+    "pass_rate": 0.52,
+    "n": 25,
+    "ci95": [
+     0.335,
+     0.7
+    ]
+   },
+   "llm_breaker": {
+    "model": "deepseek/deepseek-chat-v3-0324",
+    "n": 8,
+    "pass_rate": 0.375,
+    "runs": [
+     {
+      "exception_id": 1981,
+      "passed": false,
+      "failures": [
+       "wrong_po_link:None!=PO-16458",
+       "wrong_status:on_hold!=approved"
+      ],
+      "actions": [
+       "hold_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00067
+     },
+     {
+      "exception_id": 1982,
+      "passed": false,
+      "failures": [
+       "wrong_po_link:None!=PO-16459",
+       "wrong_status:on_hold!=approved"
+      ],
+      "actions": [
+       "hold_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00067
+     },
+     {
+      "exception_id": 1983,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00071
+     },
+     {
+      "exception_id": 1984,
+      "passed": false,
+      "failures": [
+       "wrong_po_link:None!=PO-16461",
+       "wrong_status:on_hold!=approved"
+      ],
+      "actions": [
+       "hold_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00069
+     },
+     {
+      "exception_id": 1985,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00077
+     },
+     {
+      "exception_id": 1986,
+      "passed": false,
+      "failures": [
+       "wrong_po_link:None!=PO-16463",
+       "wrong_status:on_hold!=approved"
+      ],
+      "actions": [
+       "hold_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00067
+     },
+     {
+      "exception_id": 1987,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00068
+     },
+     {
+      "exception_id": 1988,
+      "passed": false,
+      "failures": [
+       "wrong_po_link:None!=PO-16465",
+       "wrong_status:on_hold!=approved"
+      ],
+      "actions": [
+       "hold_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00067
+     }
+    ]
+   }
+  },
+  "quantity_mismatch": {
+   "admitted": true,
+   "reason": null,
+   "verifier": "Recompute received qty per line from goods receipts. If nothing received: status 'on_hold' with hold_reason 'awaiting_receipt'. Else status 'approved' with approved_amount == sum(min(invoiced, received) x unit price) x (1 + vendor tax rate), within $0.01. No writes outside the invoice.",
+   "history_agreement": 0.977,
+   "history_n": 600,
+   "blind_strategies": {
+    "resolve_only": 0.0,
+    "approve_full": 0.04,
+    "hold_generic": 0.0,
+    "hold_policy_reason": 0.4,
+    "reject_as_duplicate": 0.0,
+    "dispute_price": 0.0,
+    "flag_payment": 0.0
+   },
+   "best_blind": {
+    "strategy": "hold_policy_reason",
+    "pass_rate": 0.4,
+    "n": 25,
+    "ci95": [
+     0.234,
+     0.593
+    ]
+   },
+   "llm_breaker": {
+    "model": "deepseek/deepseek-chat-v3-0324",
+    "n": 8,
+    "pass_rate": 0.125,
+    "runs": [
+     {
+      "exception_id": 662,
+      "passed": false,
+      "failures": [
+       "wrong_amount:1244.37!=973.78"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.0014
+     },
+     {
+      "exception_id": 663,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=on_hold"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00077
+     },
+     {
+      "exception_id": 664,
+      "passed": false,
+      "failures": [
+       "wrong_amount:8590.4!=5049.45"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00077
+     },
+     {
+      "exception_id": 665,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00146
+     },
+     {
+      "exception_id": 666,
+      "passed": false,
+      "failures": [
+       "wrong_amount:1742.59!=1386.23"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00075
+     },
+     {
+      "exception_id": 667,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=on_hold"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00138
+     },
+     {
+      "exception_id": 668,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=on_hold"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00082
+     },
+     {
+      "exception_id": 669,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=on_hold"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00146
+     }
+    ]
+   }
+  },
+  "price_mismatch": {
+   "admitted": true,
+   "reason": null,
+   "verifier": "Recompute the price variance from invoice lines vs PO lines. Within tolerance (<=$25 or <=2% of PO value) or negative: invoice.status must be 'approved' with approved_amount == invoice total. Above tolerance: status must be 'disputed' and dispute_reason must mention 'price'. No writes outside the invoice.",
+   "history_agreement": 0.982,
+   "history_n": 600,
+   "blind_strategies": {
+    "resolve_only": 0.0,
+    "approve_full": 0.44,
+    "hold_generic": 0.0,
+    "hold_policy_reason": 0.0,
+    "reject_as_duplicate": 0.0,
+    "dispute_price": 0.56,
+    "flag_payment": 0.0
+   },
+   "best_blind": {
+    "strategy": "dispute_price",
+    "pass_rate": 0.56,
+    "n": 25,
+    "ci95": [
+     0.371,
+     0.733
+    ]
+   },
+   "llm_breaker": {
+    "model": "deepseek/deepseek-chat-v3-0324",
+    "n": 8,
+    "pass_rate": 0.5,
+    "runs": [
+     {
+      "exception_id": 1,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=disputed"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00117
+     },
+     {
+      "exception_id": 2,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00066
+     },
+     {
+      "exception_id": 3,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00122
+     },
+     {
+      "exception_id": 4,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00076
+     },
+     {
+      "exception_id": 5,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=disputed"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00074
+     },
+     {
+      "exception_id": 6,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=disputed"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00078
+     },
+     {
+      "exception_id": 7,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=disputed"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00073
+     },
+     {
+      "exception_id": 8,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00072
+     }
+    ]
+   }
+  },
+  "possible_duplicate": {
+   "admitted": true,
+   "reason": null,
+   "verifier": "Search the vendor's earlier invoices. If one has the same invoice number and total and is approved/paid: status must be 'rejected' with reject_reason mentioning 'duplicate'. Otherwise status 'approved' with approved_amount == total. The earlier invoice must be untouched (any write to it fails).",
+   "history_agreement": 0.98,
+   "history_n": 600,
+   "blind_strategies": {
+    "resolve_only": 0.0,
+    "approve_full": 0.32,
+    "hold_generic": 0.0,
+    "hold_policy_reason": 0.0,
+    "reject_as_duplicate": 0.68,
+    "dispute_price": 0.0,
+    "flag_payment": 0.0
+   },
+   "best_blind": {
+    "strategy": "reject_as_duplicate",
+    "pass_rate": 0.68,
+    "n": 25,
+    "ci95": [
+     0.484,
+     0.828
+    ]
+   },
+   "llm_breaker": {
+    "model": "deepseek/deepseek-chat-v3-0324",
+    "n": 8,
+    "pass_rate": 0.625,
+    "runs": [
+     {
+      "exception_id": 1321,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00122
+     },
+     {
+      "exception_id": 1322,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=rejected"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.0008
+     },
+     {
+      "exception_id": 1323,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00077
+     },
+     {
+      "exception_id": 1324,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00072
+     },
+     {
+      "exception_id": 1325,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00138
+     },
+     {
+      "exception_id": 1326,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00124
+     },
+     {
+      "exception_id": 1327,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=rejected"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00127
+     },
+     {
+      "exception_id": 1328,
+      "passed": false,
+      "failures": [
+       "wrong_status:approved!=rejected"
+      ],
+      "actions": [
+       "approve_invoice",
+       "resolve_exception"
+      ],
+      "usd": 0.00101
+     }
+    ]
+   }
+  },
+  "vendor_bank_change": {
+   "admitted": false,
+   "reason": "record-blind shortcut 'hold_policy_reason' passes 100% (95% lower bound 87%) without reading the records: the outcome is a fixed rule, not a judgement task; route it to deterministic automation / a hard control instead of outcome pricing",
+   "verifier": "invoice.remit_to_account differs from vendor.bank_account. Invoice status must be 'on_hold' with hold_reason 'bank_detail_mismatch' and the vendor must be flagged. No other writes.",
+   "history_agreement": 1.0,
+   "history_n": 600,
+   "blind_strategies": {
+    "resolve_only": 0.0,
+    "approve_full": 0.0,
+    "hold_generic": 0.0,
+    "hold_policy_reason": 1.0,
+    "reject_as_duplicate": 0.0,
+    "dispute_price": 0.0,
+    "flag_payment": 0.0
+   },
+   "best_blind": {
+    "strategy": "hold_policy_reason",
+    "pass_rate": 1.0,
+    "n": 25,
+    "ci95": [
+     0.867,
+     1.0
+    ]
+   },
+   "llm_breaker": {
+    "model": "deepseek/deepseek-chat-v3-0324",
+    "n": 8,
+    "pass_rate": 1.0,
+    "runs": [
+     {
+      "exception_id": 3301,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "flag_vendor",
+       "resolve_exception"
+      ],
+      "usd": 0.00106
+     },
+     {
+      "exception_id": 3303,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "flag_vendor",
+       "resolve_exception"
+      ],
+      "usd": 0.00106
+     },
+     {
+      "exception_id": 3304,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "flag_vendor",
+       "resolve_exception"
+      ],
+      "usd": 0.00117
+     },
+     {
+      "exception_id": 3306,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "flag_vendor",
+       "resolve_exception"
+      ],
+      "usd": 0.00106
+     },
+     {
+      "exception_id": 3307,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "flag_vendor",
+       "resolve_exception"
+      ],
+      "usd": 0.00106
+     },
+     {
+      "exception_id": 3308,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "flag_vendor",
+       "resolve_exception"
+      ],
+      "usd": 0.00109
+     },
+     {
+      "exception_id": 3309,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "flag_vendor",
+       "resolve_exception"
+      ],
+      "usd": 0.00106
+     },
+     {
+      "exception_id": 3310,
+      "passed": true,
+      "failures": [],
+      "actions": [
+       "hold_invoice",
+       "flag_vendor",
+       "resolve_exception"
+      ],
+      "usd": 0.00106
+     }
+    ]
+   }
+  }
+ }
+}

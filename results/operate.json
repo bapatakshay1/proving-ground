@@ -1,0 +1,596 @@
+{
+ "sandbox": "live",
+ "cases": [
+  {
+   "exception_id": 3242,
+   "kind": "unmatched_payment",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.72,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.01946,
+   "steps": 6
+  },
+  {
+   "exception_id": 3241,
+   "kind": "unmatched_payment",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.72,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.02027,
+   "steps": 6
+  },
+  {
+   "exception_id": 3243,
+   "kind": "unmatched_payment",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.72,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.0253,
+   "steps": 17
+  },
+  {
+   "exception_id": 3246,
+   "kind": "unmatched_payment",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.72,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.0174,
+   "steps": 6
+  },
+  {
+   "exception_id": 3245,
+   "kind": "unmatched_payment",
+   "model": "openai/gpt-4.1",
+   "ended_by": "max_steps",
+   "billed": false,
+   "price": 0.0,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.15128,
+   "steps": 20
+  },
+  {
+   "exception_id": 3247,
+   "kind": "unmatched_payment",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.72,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.01667,
+   "steps": 6
+  },
+  {
+   "exception_id": 3248,
+   "kind": "unmatched_payment",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.72,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.01733,
+   "steps": 6
+  },
+  {
+   "exception_id": 3249,
+   "kind": "unmatched_payment",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": false,
+   "price": 0.0,
+   "failures": [
+    "invoice_not_paid:7995",
+    "invoice_not_paid:7996",
+    "out_of_scope_write:invoice:2238:mark_paid",
+    "out_of_scope_write:invoice:8042:mark_paid",
+    "wrong_match:[2238, 8042]!=[7995, 7996]"
+   ],
+   "escalation_reason": null,
+   "usd": 0.06216,
+   "steps": 8
+  },
+  {
+   "exception_id": 2581,
+   "kind": "missing_po",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.22,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00293,
+   "steps": 6
+  },
+  {
+   "exception_id": 2582,
+   "kind": "missing_po",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.22,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.0024,
+   "steps": 7
+  },
+  {
+   "exception_id": 2583,
+   "kind": "missing_po",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.22,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00288,
+   "steps": 6
+  },
+  {
+   "exception_id": 2584,
+   "kind": "missing_po",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.22,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00294,
+   "steps": 6
+  },
+  {
+   "exception_id": 2585,
+   "kind": "missing_po",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.22,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00298,
+   "steps": 7
+  },
+  {
+   "exception_id": 2586,
+   "kind": "missing_po",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.22,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00295,
+   "steps": 7
+  },
+  {
+   "exception_id": 2587,
+   "kind": "missing_po",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.22,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.0027,
+   "steps": 7
+  },
+  {
+   "exception_id": 2588,
+   "kind": "missing_po",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 5.22,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00293,
+   "steps": 6
+  },
+  {
+   "exception_id": 1262,
+   "kind": "quantity_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 4.58,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00182,
+   "steps": 5
+  },
+  {
+   "exception_id": 1261,
+   "kind": "quantity_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 4.58,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00307,
+   "steps": 6
+  },
+  {
+   "exception_id": 1263,
+   "kind": "quantity_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 4.58,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00386,
+   "steps": 8
+  },
+  {
+   "exception_id": 1264,
+   "kind": "quantity_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 4.58,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00314,
+   "steps": 6
+  },
+  {
+   "exception_id": 1265,
+   "kind": "quantity_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 4.58,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.0032,
+   "steps": 6
+  },
+  {
+   "exception_id": 1266,
+   "kind": "quantity_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": false,
+   "price": 0.0,
+   "failures": [
+    "wrong_amount:16803.53!=16903.53"
+   ],
+   "escalation_reason": null,
+   "usd": 0.00398,
+   "steps": 7
+  },
+  {
+   "exception_id": 1270,
+   "kind": "quantity_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 4.58,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00437,
+   "steps": 9
+  },
+  {
+   "exception_id": 1267,
+   "kind": "quantity_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 4.58,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00302,
+   "steps": 6
+  },
+  {
+   "exception_id": 603,
+   "kind": "price_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 3.17,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.0024,
+   "steps": 6
+  },
+  {
+   "exception_id": 601,
+   "kind": "price_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 3.17,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00338,
+   "steps": 6
+  },
+  {
+   "exception_id": 602,
+   "kind": "price_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 3.17,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00408,
+   "steps": 6
+  },
+  {
+   "exception_id": 604,
+   "kind": "price_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 3.17,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.0039,
+   "steps": 6
+  },
+  {
+   "exception_id": 605,
+   "kind": "price_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 3.17,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00258,
+   "steps": 6
+  },
+  {
+   "exception_id": 609,
+   "kind": "price_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 3.17,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00279,
+   "steps": 8
+  },
+  {
+   "exception_id": 611,
+   "kind": "price_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 3.17,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.00308,
+   "steps": 7
+  },
+  {
+   "exception_id": 606,
+   "kind": "price_mismatch",
+   "model": "openai/gpt-4.1-mini",
+   "ended_by": "resolve_exception",
+   "billed": false,
+   "price": 0.0,
+   "failures": [
+    "wrong_status:approved!=disputed"
+   ],
+   "escalation_reason": null,
+   "usd": 0.00414,
+   "steps": 8
+  },
+  {
+   "exception_id": 1921,
+   "kind": "possible_duplicate",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 2.02,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.02563,
+   "steps": 8
+  },
+  {
+   "exception_id": 1923,
+   "kind": "possible_duplicate",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 2.02,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.01367,
+   "steps": 5
+  },
+  {
+   "exception_id": 1924,
+   "kind": "possible_duplicate",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 2.02,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.01449,
+   "steps": 5
+  },
+  {
+   "exception_id": 1922,
+   "kind": "possible_duplicate",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 2.02,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.02187,
+   "steps": 8
+  },
+  {
+   "exception_id": 1927,
+   "kind": "possible_duplicate",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 2.02,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.02549,
+   "steps": 7
+  },
+  {
+   "exception_id": 1928,
+   "kind": "possible_duplicate",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 2.02,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.02141,
+   "steps": 5
+  },
+  {
+   "exception_id": 1929,
+   "kind": "possible_duplicate",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 2.02,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.01635,
+   "steps": 5
+  },
+  {
+   "exception_id": 1930,
+   "kind": "possible_duplicate",
+   "model": "openai/gpt-4.1",
+   "ended_by": "resolve_exception",
+   "billed": true,
+   "price": 2.02,
+   "failures": [],
+   "escalation_reason": null,
+   "usd": 0.01877,
+   "steps": 5
+  }
+ ],
+ "by_kind": {
+  "quantity_mismatch": {
+   "n": 8,
+   "billed": 7,
+   "model": "openai/gpt-4.1-mini",
+   "metered_pass_rate": 0.875,
+   "billed_usd": 32.06,
+   "replay_pass_rate": 1.0,
+   "gap_pts": 12.5,
+   "routed_to_human": [
+    {
+     "exception_id": 1266,
+     "why": "wrong_amount:16803.53!=16903.53"
+    }
+   ],
+   "model_usd": 0.0265
+  },
+  "price_mismatch": {
+   "n": 8,
+   "billed": 7,
+   "model": "openai/gpt-4.1-mini",
+   "metered_pass_rate": 0.875,
+   "billed_usd": 22.19,
+   "replay_pass_rate": 0.95,
+   "gap_pts": 7.5,
+   "routed_to_human": [
+    {
+     "exception_id": 606,
+     "why": "wrong_status:approved!=disputed"
+    }
+   ],
+   "model_usd": 0.0263
+  },
+  "possible_duplicate": {
+   "n": 8,
+   "billed": 8,
+   "model": "openai/gpt-4.1",
+   "metered_pass_rate": 1.0,
+   "billed_usd": 16.16,
+   "replay_pass_rate": 1.0,
+   "gap_pts": 0.0,
+   "routed_to_human": [],
+   "model_usd": 0.1577
+  },
+  "unmatched_payment": {
+   "n": 8,
+   "billed": 6,
+   "model": "openai/gpt-4.1",
+   "metered_pass_rate": 0.75,
+   "billed_usd": 34.32,
+   "replay_pass_rate": 0.6,
+   "gap_pts": -15.0,
+   "routed_to_human": [
+    {
+     "exception_id": 3245,
+     "why": "max_steps"
+    },
+    {
+     "exception_id": 3249,
+     "why": "invoice_not_paid:7995,invoice_not_paid:7996,out_of_scope_write:invoice:2238:mark_paid,out_of_scope_write:invoice:8042:mark_paid,wrong_match:[2238, 8042]!=[7995, 7996]"
+    }
+   ],
+   "model_usd": 0.3299
+  },
+  "missing_po": {
+   "n": 8,
+   "billed": 8,
+   "model": "openai/gpt-4.1-mini",
+   "metered_pass_rate": 1.0,
+   "billed_usd": 41.76,
+   "replay_pass_rate": 0.9,
+   "gap_pts": -10.0,
+   "routed_to_human": [],
+   "model_usd": 0.0227
+  }
+ },
+ "stop_rule": {
+  "shadow_gap_max_pts": 10.0,
+  "tripped": [
+   "quantity_mismatch"
+  ]
+ },
+ "new_candidate_tasks": [
+  {
+   "pattern": "unmatched_payment: not finished (max_steps)",
+   "count": 1
+  },
+  {
+   "pattern": "unmatched_payment: verifier rejected: invoice_not_paid, out_of_scope_write, wrong_match",
+   "count": 1
+  },
+  {
+   "pattern": "quantity_mismatch: verifier rejected: wrong_amount",
+   "count": 1
+  },
+  {
+   "pattern": "price_mismatch: verifier rejected: wrong_status",
+   "count": 1
+  }
+ ],
+ "billing_total_usd": 146.49
+}

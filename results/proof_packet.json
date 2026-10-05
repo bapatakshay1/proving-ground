@@ -1,0 +1,1285 @@
+{
+ "generated_at": "2026-10-05T04:29:36.710495+00:00",
+ "company": "Harbor Point Manufacturing",
+ "as_of": "2026-10-01",
+ "models": {
+  "proposer": "google/gemini-2.5-flash",
+  "solver": "openai/gpt-4.1-mini",
+  "breaker": "deepseek/deepseek-chat-v3-0324"
+ },
+ "thresholds": {
+  "history_agreement_min": 0.9,
+  "blind_pass_max": 0.7,
+  "price_fraction_of_current_cost": 0.5,
+  "serve_overhead_on_model_spend": 0.25,
+  "contract_bar": 0.9,
+  "annual_minimum_fraction": 0.8,
+  "ops_allowance_per_outcome_usd": 0.25,
+  "discovery_run": "fixed fee, credited against first-year outcome fees (not counted as revenue)",
+  "shadow_gap_max_pts": 10.0
+ },
+ "gates": {
+  "five_verifiers_survive_breaker": true,
+  "admitted_count": 5,
+  "stop_rule_tripped": [
+   "quantity_mismatch"
+  ]
+ },
+ "workflows": [
+  {
+   "kind": "unmatched_payment",
+   "title": "Automate Unmatched Payment Resolution",
+   "description": "An autonomous agent can identify the vendor from the counterparty name and search for matching approved, unpaid invoices to reconcile bank transactions, either individually or in pairs, or flag for treasury if no match is found.",
+   "needs_judgement": "The agent needs to determine if a single invoice or a pair of invoices matches the debit amount, or if no match exists, requiring a decision to flag for treasury.",
+   "evidence": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 11.45,
+    "avg_handling_minutes": 12.7,
+    "open": 60
+   },
+   "verifier": "Identify the vendor from the counterparty, then the approved unpaid invoice(s) dated on/before the transaction whose total(s) equal the amount (one invoice, else exactly one pair). Transaction must be 'reconciled' with exactly that invoice set and those invoices 'paid'. If no match exists: status 'flagged' with flag_reason containing 'no_matching'. Writes only to the transaction and the matched invoices.",
+   "admission": {
+    "admitted": true,
+    "reason": null,
+    "history_agreement": 0.982,
+    "history_n": 600,
+    "blind_strategies": {
+     "resolve_only": 0.0,
+     "approve_full": 0.0,
+     "hold_generic": 0.0,
+     "hold_policy_reason": 0.0,
+     "reject_as_duplicate": 0.0,
+     "dispute_price": 0.0,
+     "flag_payment": 0.28
+    },
+    "best_blind": {
+     "strategy": "flag_payment",
+     "pass_rate": 0.28,
+     "n": 25,
+     "ci95": [
+      0.143,
+      0.476
+     ]
+    },
+    "llm_breaker": {
+     "model": "deepseek/deepseek-chat-v3-0324",
+     "n": 8,
+     "pass_rate": 0.0,
+     "runs": [
+      {
+       "exception_id": 2641,
+       "passed": false,
+       "failures": [
+        "wrong_status:flagged!=reconciled"
+       ],
+       "actions": [
+        "match_bank_transaction",
+        "flag_bank_transaction",
+        "resolve_exception"
+       ],
+       "usd": 0.00191
+      },
+      {
+       "exception_id": 2642,
+       "passed": false,
+       "failures": [
+        "wrong_status:flagged!=reconciled"
+       ],
+       "actions": [
+        "flag_bank_transaction",
+        "resolve_exception"
+       ],
+       "usd": 0.00119
+      },
+      {
+       "exception_id": 2643,
+       "passed": false,
+       "failures": [
+        "wrong_status:flagged!=reconciled"
+       ],
+       "actions": [
+        "flag_bank_transaction",
+        "resolve_exception"
+       ],
+       "usd": 0.00069
+      },
+      {
+       "exception_id": 2644,
+       "passed": false,
+       "failures": [
+        "wrong_status:flagged!=reconciled"
+       ],
+       "actions": [
+        "match_bank_transaction",
+        "match_bank_transaction",
+        "flag_bank_transaction",
+        "resolve_exception"
+       ],
+       "usd": 0.00267
+      },
+      {
+       "exception_id": 2645,
+       "passed": false,
+       "failures": [
+        "wrong_status:flagged!=reconciled"
+       ],
+       "actions": [
+        "flag_bank_transaction",
+        "resolve_exception"
+       ],
+       "usd": 0.0007
+      },
+      {
+       "exception_id": 2646,
+       "passed": false,
+       "failures": [
+        "wrong_status:flagged!=reconciled"
+       ],
+       "actions": [
+        "flag_bank_transaction",
+        "resolve_exception"
+       ],
+       "usd": 0.00067
+      },
+      {
+       "exception_id": 2647,
+       "passed": false,
+       "failures": [
+        "wrong_status:flagged!=reconciled"
+       ],
+       "actions": [
+        "flag_bank_transaction",
+        "resolve_exception"
+       ],
+       "usd": 0.00069
+      },
+      {
+       "exception_id": 2648,
+       "passed": false,
+       "failures": [
+        "wrong_status:flagged!=reconciled"
+       ],
+       "actions": [
+        "flag_bank_transaction",
+        "resolve_exception"
+       ],
+       "usd": 0.0007
+      }
+     ]
+    }
+   },
+   "replay": {
+    "n": 20,
+    "passed": 12,
+    "pass_rate": 0.6,
+    "ci95": [
+     0.387,
+     0.781
+    ],
+    "agrees_with_history": 0.55,
+    "history_overrides_in_sample": 1,
+    "failure_modes": {
+     "out_of_scope_write": 9,
+     "wrong_status": 4,
+     "not_finished:max_steps": 3,
+     "invoice_not_paid": 1,
+     "wrong_match": 1
+    },
+    "mean_usd": 0.0359,
+    "mean_steps": 9.1,
+    "model": "openai/gpt-4.1"
+   },
+   "pricing": {
+    "solver_model": "openai/gpt-4.1",
+    "tiers_considered": {
+     "openai/gpt-4.1-mini": 0.55,
+     "openai/gpt-4.1": 0.6
+    },
+    "monthly_volume": 55.0,
+    "avg_handling_minutes": 12.7,
+    "current_unit_cost_usd": 11.45,
+    "price_per_outcome_usd": 5.72,
+    "pass_rate": 0.6,
+    "pass_rate_ci95": [
+     0.387,
+     0.781
+    ],
+    "measured_model_cost_per_attempt_usd": 0.0359,
+    "model_cost_per_verified_outcome_usd": 0.0598,
+    "cost_to_serve_usd": 0.3248,
+    "gross_margin": 0.943,
+    "projected_monthly_revenue_usd": 188.76,
+    "projected_monthly_customer_saving_usd": 189.09,
+    "proposed_annual_minimum_outcomes": 204,
+    "meets_contract_bar": false
+   },
+   "live": {
+    "n": 8,
+    "billed": 6,
+    "model": "openai/gpt-4.1",
+    "metered_pass_rate": 0.75,
+    "billed_usd": 34.32,
+    "replay_pass_rate": 0.6,
+    "gap_pts": -15.0,
+    "routed_to_human": [
+     {
+      "exception_id": 3245,
+      "why": "max_steps"
+     },
+     {
+      "exception_id": 3249,
+      "why": "invoice_not_paid:7995,invoice_not_paid:7996,out_of_scope_write:invoice:2238:mark_paid,out_of_scope_write:invoice:8042:mark_paid,wrong_match:[2238, 8042]!=[7995, 7996]"
+     }
+    ],
+    "model_usd": 0.3299
+   }
+  },
+  {
+   "kind": "missing_po",
+   "title": "Automate Missing or Invalid PO Reference Resolution",
+   "description": "An autonomous agent can search for an open purchase order for the same vendor that contains all invoiced SKUs at the correct unit price and sufficient remaining quantity, then link the invoice or hold it if no suitable PO is found.",
+   "needs_judgement": "The agent needs to determine if exactly one suitable PO exists to link, or if none exist, requiring a decision to hold the invoice and request a PO.",
+   "evidence": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 10.45,
+    "avg_handling_minutes": 11.6,
+    "open": 60
+   },
+   "verifier": "Search the vendor's open POs for one whose lines cover every invoiced SKU at the same unit price with enough remaining quantity. Exactly one: invoice.po_number must equal it and status 'approved' with approved_amount == total. None: status 'on_hold' with hold_reason 'po_required'. No writes outside the invoice.",
+   "admission": {
+    "admitted": true,
+    "reason": null,
+    "history_agreement": 1.0,
+    "history_n": 600,
+    "blind_strategies": {
+     "resolve_only": 0.0,
+     "approve_full": 0.0,
+     "hold_generic": 0.0,
+     "hold_policy_reason": 0.52,
+     "reject_as_duplicate": 0.0,
+     "dispute_price": 0.0,
+     "flag_payment": 0.0
+    },
+    "best_blind": {
+     "strategy": "hold_policy_reason",
+     "pass_rate": 0.52,
+     "n": 25,
+     "ci95": [
+      0.335,
+      0.7
+     ]
+    },
+    "llm_breaker": {
+     "model": "deepseek/deepseek-chat-v3-0324",
+     "n": 8,
+     "pass_rate": 0.375,
+     "runs": [
+      {
+       "exception_id": 1981,
+       "passed": false,
+       "failures": [
+        "wrong_po_link:None!=PO-16458",
+        "wrong_status:on_hold!=approved"
+       ],
+       "actions": [
+        "hold_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00067
+      },
+      {
+       "exception_id": 1982,
+       "passed": false,
+       "failures": [
+        "wrong_po_link:None!=PO-16459",
+        "wrong_status:on_hold!=approved"
+       ],
+       "actions": [
+        "hold_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00067
+      },
+      {
+       "exception_id": 1983,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00071
+      },
+      {
+       "exception_id": 1984,
+       "passed": false,
+       "failures": [
+        "wrong_po_link:None!=PO-16461",
+        "wrong_status:on_hold!=approved"
+       ],
+       "actions": [
+        "hold_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00069
+      },
+      {
+       "exception_id": 1985,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00077
+      },
+      {
+       "exception_id": 1986,
+       "passed": false,
+       "failures": [
+        "wrong_po_link:None!=PO-16463",
+        "wrong_status:on_hold!=approved"
+       ],
+       "actions": [
+        "hold_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00067
+      },
+      {
+       "exception_id": 1987,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00068
+      },
+      {
+       "exception_id": 1988,
+       "passed": false,
+       "failures": [
+        "wrong_po_link:None!=PO-16465",
+        "wrong_status:on_hold!=approved"
+       ],
+       "actions": [
+        "hold_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00067
+      }
+     ]
+    }
+   },
+   "replay": {
+    "n": 20,
+    "passed": 18,
+    "pass_rate": 0.9,
+    "ci95": [
+     0.699,
+     0.972
+    ],
+    "agrees_with_history": 0.9,
+    "history_overrides_in_sample": 0,
+    "failure_modes": {
+     "wrong_status": 2
+    },
+    "mean_usd": 0.0045,
+    "mean_steps": 6.8,
+    "model": "openai/gpt-4.1-mini"
+   },
+   "pricing": {
+    "solver_model": "openai/gpt-4.1-mini",
+    "tiers_considered": {
+     "openai/gpt-4.1-mini": 0.9,
+     "openai/gpt-4.1": 1.0
+    },
+    "monthly_volume": 55.0,
+    "avg_handling_minutes": 11.6,
+    "current_unit_cost_usd": 10.45,
+    "price_per_outcome_usd": 5.22,
+    "pass_rate": 0.9,
+    "pass_rate_ci95": [
+     0.699,
+     0.972
+    ],
+    "measured_model_cost_per_attempt_usd": 0.0045,
+    "model_cost_per_verified_outcome_usd": 0.005,
+    "cost_to_serve_usd": 0.2562,
+    "gross_margin": 0.951,
+    "projected_monthly_revenue_usd": 258.39,
+    "projected_monthly_customer_saving_usd": 258.88,
+    "proposed_annual_minimum_outcomes": 369,
+    "meets_contract_bar": true
+   },
+   "live": {
+    "n": 8,
+    "billed": 8,
+    "model": "openai/gpt-4.1-mini",
+    "metered_pass_rate": 1.0,
+    "billed_usd": 41.76,
+    "replay_pass_rate": 0.9,
+    "gap_pts": -10.0,
+    "routed_to_human": [],
+    "model_usd": 0.0227
+   }
+  },
+  {
+   "kind": "quantity_mismatch",
+   "title": "Automate Quantity Mismatch Resolution",
+   "description": "An autonomous agent can determine if nothing has been received for an invoice, placing it on hold, or if some quantity has been received, approving only the received portion and noting short-paid lines.",
+   "needs_judgement": "The agent needs to determine if any quantity has been received to decide between holding the invoice or approving a partial amount.",
+   "evidence": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 9.16,
+    "avg_handling_minutes": 10.2,
+    "open": 60
+   },
+   "verifier": "Recompute received qty per line from goods receipts. If nothing received: status 'on_hold' with hold_reason 'awaiting_receipt'. Else status 'approved' with approved_amount == sum(min(invoiced, received) x unit price) x (1 + vendor tax rate), within $0.01. No writes outside the invoice.",
+   "admission": {
+    "admitted": true,
+    "reason": null,
+    "history_agreement": 0.977,
+    "history_n": 600,
+    "blind_strategies": {
+     "resolve_only": 0.0,
+     "approve_full": 0.04,
+     "hold_generic": 0.0,
+     "hold_policy_reason": 0.4,
+     "reject_as_duplicate": 0.0,
+     "dispute_price": 0.0,
+     "flag_payment": 0.0
+    },
+    "best_blind": {
+     "strategy": "hold_policy_reason",
+     "pass_rate": 0.4,
+     "n": 25,
+     "ci95": [
+      0.234,
+      0.593
+     ]
+    },
+    "llm_breaker": {
+     "model": "deepseek/deepseek-chat-v3-0324",
+     "n": 8,
+     "pass_rate": 0.125,
+     "runs": [
+      {
+       "exception_id": 662,
+       "passed": false,
+       "failures": [
+        "wrong_amount:1244.37!=973.78"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.0014
+      },
+      {
+       "exception_id": 663,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=on_hold"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00077
+      },
+      {
+       "exception_id": 664,
+       "passed": false,
+       "failures": [
+        "wrong_amount:8590.4!=5049.45"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00077
+      },
+      {
+       "exception_id": 665,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00146
+      },
+      {
+       "exception_id": 666,
+       "passed": false,
+       "failures": [
+        "wrong_amount:1742.59!=1386.23"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00075
+      },
+      {
+       "exception_id": 667,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=on_hold"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00138
+      },
+      {
+       "exception_id": 668,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=on_hold"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00082
+      },
+      {
+       "exception_id": 669,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=on_hold"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00146
+      }
+     ]
+    }
+   },
+   "replay": {
+    "n": 20,
+    "passed": 20,
+    "pass_rate": 1.0,
+    "ci95": [
+     0.839,
+     1.0
+    ],
+    "agrees_with_history": 1.0,
+    "history_overrides_in_sample": 0,
+    "failure_modes": {},
+    "mean_usd": 0.0054,
+    "mean_steps": 7.3,
+    "model": "openai/gpt-4.1-mini"
+   },
+   "pricing": {
+    "solver_model": "openai/gpt-4.1-mini",
+    "tiers_considered": {
+     "openai/gpt-4.1-mini": 1.0,
+     "openai/gpt-4.1": 0.95
+    },
+    "monthly_volume": 55.0,
+    "avg_handling_minutes": 10.2,
+    "current_unit_cost_usd": 9.16,
+    "price_per_outcome_usd": 4.58,
+    "pass_rate": 1.0,
+    "pass_rate_ci95": [
+     0.839,
+     1.0
+    ],
+    "measured_model_cost_per_attempt_usd": 0.0054,
+    "model_cost_per_verified_outcome_usd": 0.0054,
+    "cost_to_serve_usd": 0.2567,
+    "gross_margin": 0.944,
+    "projected_monthly_revenue_usd": 251.9,
+    "projected_monthly_customer_saving_usd": 251.9,
+    "proposed_annual_minimum_outcomes": 442,
+    "meets_contract_bar": true
+   },
+   "live": {
+    "n": 8,
+    "billed": 7,
+    "model": "openai/gpt-4.1-mini",
+    "metered_pass_rate": 0.875,
+    "billed_usd": 32.06,
+    "replay_pass_rate": 1.0,
+    "gap_pts": 12.5,
+    "routed_to_human": [
+     {
+      "exception_id": 1266,
+      "why": "wrong_amount:16803.53!=16903.53"
+     }
+    ],
+    "model_usd": 0.0265
+   }
+  },
+  {
+   "kind": "price_mismatch",
+   "title": "Automate Price Mismatch Resolution",
+   "description": "An autonomous agent can calculate the price variance and, based on predefined tolerances, either approve the invoice at its total, or dispute it with the vendor if the variance is above tolerance.",
+   "needs_judgement": "The agent needs to calculate the variance and compare it against tolerance thresholds to decide whether to approve or dispute the invoice.",
+   "evidence": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 6.35,
+    "avg_handling_minutes": 7.1,
+    "open": 60
+   },
+   "verifier": "Recompute the price variance from invoice lines vs PO lines. Within tolerance (<=$25 or <=2% of PO value) or negative: invoice.status must be 'approved' with approved_amount == invoice total. Above tolerance: status must be 'disputed' and dispute_reason must mention 'price'. No writes outside the invoice.",
+   "admission": {
+    "admitted": true,
+    "reason": null,
+    "history_agreement": 0.982,
+    "history_n": 600,
+    "blind_strategies": {
+     "resolve_only": 0.0,
+     "approve_full": 0.44,
+     "hold_generic": 0.0,
+     "hold_policy_reason": 0.0,
+     "reject_as_duplicate": 0.0,
+     "dispute_price": 0.56,
+     "flag_payment": 0.0
+    },
+    "best_blind": {
+     "strategy": "dispute_price",
+     "pass_rate": 0.56,
+     "n": 25,
+     "ci95": [
+      0.371,
+      0.733
+     ]
+    },
+    "llm_breaker": {
+     "model": "deepseek/deepseek-chat-v3-0324",
+     "n": 8,
+     "pass_rate": 0.5,
+     "runs": [
+      {
+       "exception_id": 1,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=disputed"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00117
+      },
+      {
+       "exception_id": 2,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00066
+      },
+      {
+       "exception_id": 3,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00122
+      },
+      {
+       "exception_id": 4,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00076
+      },
+      {
+       "exception_id": 5,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=disputed"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00074
+      },
+      {
+       "exception_id": 6,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=disputed"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00078
+      },
+      {
+       "exception_id": 7,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=disputed"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00073
+      },
+      {
+       "exception_id": 8,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00072
+      }
+     ]
+    }
+   },
+   "replay": {
+    "n": 20,
+    "passed": 19,
+    "pass_rate": 0.95,
+    "ci95": [
+     0.764,
+     0.991
+    ],
+    "agrees_with_history": 0.95,
+    "history_overrides_in_sample": 0,
+    "failure_modes": {
+     "wrong_status": 1
+    },
+    "mean_usd": 0.0053,
+    "mean_steps": 7.1,
+    "model": "openai/gpt-4.1-mini"
+   },
+   "pricing": {
+    "solver_model": "openai/gpt-4.1-mini",
+    "tiers_considered": {
+     "openai/gpt-4.1-mini": 0.95,
+     "openai/gpt-4.1": 1.0
+    },
+    "monthly_volume": 55.0,
+    "avg_handling_minutes": 7.1,
+    "current_unit_cost_usd": 6.35,
+    "price_per_outcome_usd": 3.17,
+    "pass_rate": 0.95,
+    "pass_rate_ci95": [
+     0.764,
+     0.991
+    ],
+    "measured_model_cost_per_attempt_usd": 0.0053,
+    "model_cost_per_verified_outcome_usd": 0.0056,
+    "cost_to_serve_usd": 0.257,
+    "gross_margin": 0.919,
+    "projected_monthly_revenue_usd": 165.63,
+    "projected_monthly_customer_saving_usd": 166.15,
+    "proposed_annual_minimum_outcomes": 403,
+    "meets_contract_bar": true
+   },
+   "live": {
+    "n": 8,
+    "billed": 7,
+    "model": "openai/gpt-4.1-mini",
+    "metered_pass_rate": 0.875,
+    "billed_usd": 22.19,
+    "replay_pass_rate": 0.95,
+    "gap_pts": 7.5,
+    "routed_to_human": [
+     {
+      "exception_id": 606,
+      "why": "wrong_status:approved!=disputed"
+     }
+    ],
+    "model_usd": 0.0263
+   }
+  },
+  {
+   "kind": "possible_duplicate",
+   "title": "Automate Possible Duplicate Invoice Resolution",
+   "description": "An autonomous agent can identify true duplicates (same vendor, invoice number, and total as an earlier approved/paid invoice) and reject them, or approve legitimate invoices that are not true duplicates.",
+   "needs_judgement": "The agent needs to compare multiple invoice attributes (vendor, number, total, PO) to determine if an invoice is a true duplicate or a legitimate, unique invoice.",
+   "evidence": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 4.03,
+    "avg_handling_minutes": 4.5,
+    "open": 60
+   },
+   "verifier": "Search the vendor's earlier invoices. If one has the same invoice number and total and is approved/paid: status must be 'rejected' with reject_reason mentioning 'duplicate'. Otherwise status 'approved' with approved_amount == total. The earlier invoice must be untouched (any write to it fails).",
+   "admission": {
+    "admitted": true,
+    "reason": null,
+    "history_agreement": 0.98,
+    "history_n": 600,
+    "blind_strategies": {
+     "resolve_only": 0.0,
+     "approve_full": 0.32,
+     "hold_generic": 0.0,
+     "hold_policy_reason": 0.0,
+     "reject_as_duplicate": 0.68,
+     "dispute_price": 0.0,
+     "flag_payment": 0.0
+    },
+    "best_blind": {
+     "strategy": "reject_as_duplicate",
+     "pass_rate": 0.68,
+     "n": 25,
+     "ci95": [
+      0.484,
+      0.828
+     ]
+    },
+    "llm_breaker": {
+     "model": "deepseek/deepseek-chat-v3-0324",
+     "n": 8,
+     "pass_rate": 0.625,
+     "runs": [
+      {
+       "exception_id": 1321,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00122
+      },
+      {
+       "exception_id": 1322,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=rejected"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.0008
+      },
+      {
+       "exception_id": 1323,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00077
+      },
+      {
+       "exception_id": 1324,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00072
+      },
+      {
+       "exception_id": 1325,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00138
+      },
+      {
+       "exception_id": 1326,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00124
+      },
+      {
+       "exception_id": 1327,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=rejected"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00127
+      },
+      {
+       "exception_id": 1328,
+       "passed": false,
+       "failures": [
+        "wrong_status:approved!=rejected"
+       ],
+       "actions": [
+        "approve_invoice",
+        "resolve_exception"
+       ],
+       "usd": 0.00101
+      }
+     ]
+    }
+   },
+   "replay": {
+    "n": 20,
+    "passed": 20,
+    "pass_rate": 1.0,
+    "ci95": [
+     0.839,
+     1.0
+    ],
+    "agrees_with_history": 1.0,
+    "history_overrides_in_sample": 0,
+    "failure_modes": {},
+    "mean_usd": 0.0256,
+    "mean_steps": 7.0,
+    "model": "openai/gpt-4.1"
+   },
+   "pricing": {
+    "solver_model": "openai/gpt-4.1",
+    "tiers_considered": {
+     "openai/gpt-4.1-mini": 0.6,
+     "openai/gpt-4.1": 1.0
+    },
+    "monthly_volume": 55.0,
+    "avg_handling_minutes": 4.5,
+    "current_unit_cost_usd": 4.03,
+    "price_per_outcome_usd": 2.02,
+    "pass_rate": 1.0,
+    "pass_rate_ci95": [
+     0.839,
+     1.0
+    ],
+    "measured_model_cost_per_attempt_usd": 0.0256,
+    "model_cost_per_verified_outcome_usd": 0.0256,
+    "cost_to_serve_usd": 0.282,
+    "gross_margin": 0.86,
+    "projected_monthly_revenue_usd": 111.1,
+    "projected_monthly_customer_saving_usd": 110.55,
+    "proposed_annual_minimum_outcomes": 442,
+    "meets_contract_bar": true
+   },
+   "live": {
+    "n": 8,
+    "billed": 8,
+    "model": "openai/gpt-4.1",
+    "metered_pass_rate": 1.0,
+    "billed_usd": 16.16,
+    "replay_pass_rate": 1.0,
+    "gap_pts": 0.0,
+    "routed_to_human": [],
+    "model_usd": 0.1577
+   }
+  },
+  {
+   "kind": "vendor_bank_change",
+   "title": "Automate Vendor Bank Detail Mismatch Handling",
+   "description": "An autonomous agent can identify when an invoice's remit-to account differs from the vendor master, then hold the invoice and flag the vendor for verification.",
+   "needs_judgement": "The agent needs to compare the invoice's remit-to account with the vendor master record to determine if a mismatch exists, which triggers a hold and flag action.",
+   "evidence": {
+    "total": 660,
+    "months": 12,
+    "monthly_volume": 55.0,
+    "current_unit_cost_usd": 4.94,
+    "avg_handling_minutes": 5.5,
+    "open": 60
+   },
+   "verifier": "invoice.remit_to_account differs from vendor.bank_account. Invoice status must be 'on_hold' with hold_reason 'bank_detail_mismatch' and the vendor must be flagged. No other writes.",
+   "admission": {
+    "admitted": false,
+    "reason": "record-blind shortcut 'hold_policy_reason' passes 100% (95% lower bound 87%) without reading the records: the outcome is a fixed rule, not a judgement task; route it to deterministic automation / a hard control instead of outcome pricing",
+    "history_agreement": 1.0,
+    "history_n": 600,
+    "blind_strategies": {
+     "resolve_only": 0.0,
+     "approve_full": 0.0,
+     "hold_generic": 0.0,
+     "hold_policy_reason": 1.0,
+     "reject_as_duplicate": 0.0,
+     "dispute_price": 0.0,
+     "flag_payment": 0.0
+    },
+    "best_blind": {
+     "strategy": "hold_policy_reason",
+     "pass_rate": 1.0,
+     "n": 25,
+     "ci95": [
+      0.867,
+      1.0
+     ]
+    },
+    "llm_breaker": {
+     "model": "deepseek/deepseek-chat-v3-0324",
+     "n": 8,
+     "pass_rate": 1.0,
+     "runs": [
+      {
+       "exception_id": 3301,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "flag_vendor",
+        "resolve_exception"
+       ],
+       "usd": 0.00106
+      },
+      {
+       "exception_id": 3303,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "flag_vendor",
+        "resolve_exception"
+       ],
+       "usd": 0.00106
+      },
+      {
+       "exception_id": 3304,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "flag_vendor",
+        "resolve_exception"
+       ],
+       "usd": 0.00117
+      },
+      {
+       "exception_id": 3306,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "flag_vendor",
+        "resolve_exception"
+       ],
+       "usd": 0.00106
+      },
+      {
+       "exception_id": 3307,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "flag_vendor",
+        "resolve_exception"
+       ],
+       "usd": 0.00106
+      },
+      {
+       "exception_id": 3308,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "flag_vendor",
+        "resolve_exception"
+       ],
+       "usd": 0.00109
+      },
+      {
+       "exception_id": 3309,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "flag_vendor",
+        "resolve_exception"
+       ],
+       "usd": 0.00106
+      },
+      {
+       "exception_id": 3310,
+       "passed": true,
+       "failures": [],
+       "actions": [
+        "hold_invoice",
+        "flag_vendor",
+        "resolve_exception"
+       ],
+       "usd": 0.00106
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "solver_tiers": {
+  "openai/gpt-4.1-mini": {
+   "missing_po": {
+    "pass_rate": 0.9,
+    "ci95": [
+     0.699,
+     0.972
+    ],
+    "mean_usd": 0.0045,
+    "mean_steps": 6.8,
+    "failure_modes": {
+     "wrong_status": 2
+    }
+   },
+   "price_mismatch": {
+    "pass_rate": 0.95,
+    "ci95": [
+     0.764,
+     0.991
+    ],
+    "mean_usd": 0.0053,
+    "mean_steps": 7.1,
+    "failure_modes": {
+     "wrong_status": 1
+    }
+   },
+   "unmatched_payment": {
+    "pass_rate": 0.55,
+    "ci95": [
+     0.342,
+     0.742
+    ],
+    "mean_usd": 0.0101,
+    "mean_steps": 12.2,
+    "failure_modes": {
+     "out_of_scope_write": 5,
+     "wrong_status": 3,
+     "not_finished:max_steps": 3,
+     "not_finished:escalate_exception": 2,
+     "invoice_not_paid": 1,
+     "wrong_match": 1
+    }
+   },
+   "possible_duplicate": {
+    "pass_rate": 0.6,
+    "ci95": [
+     0.387,
+     0.781
+    ],
+    "mean_usd": 0.0074,
+    "mean_steps": 8.3,
+    "failure_modes": {
+     "wrong_status": 8
+    }
+   },
+   "quantity_mismatch": {
+    "pass_rate": 1.0,
+    "ci95": [
+     0.839,
+     1.0
+    ],
+    "mean_usd": 0.0054,
+    "mean_steps": 7.3,
+    "failure_modes": {}
+   }
+  },
+  "openai/gpt-4.1": {
+   "quantity_mismatch": {
+    "pass_rate": 0.95,
+    "ci95": [
+     0.764,
+     0.991
+    ],
+    "mean_usd": 0.0168,
+    "mean_steps": 5.8,
+    "failure_modes": {
+     "wrong_status": 1
+    }
+   },
+   "unmatched_payment": {
+    "pass_rate": 0.6,
+    "ci95": [
+     0.387,
+     0.781
+    ],
+    "mean_usd": 0.0359,
+    "mean_steps": 9.1,
+    "failure_modes": {
+     "out_of_scope_write": 9,
+     "wrong_status": 4,
+     "not_finished:max_steps": 3,
+     "invoice_not_paid": 1,
+     "wrong_match": 1
+    }
+   },
+   "missing_po": {
+    "pass_rate": 1.0,
+    "ci95": [
+     0.839,
+     1.0
+    ],
+    "mean_usd": 0.019,
+    "mean_steps": 6.1,
+    "failure_modes": {}
+   },
+   "price_mismatch": {
+    "pass_rate": 1.0,
+    "ci95": [
+     0.839,
+     1.0
+    ],
+    "mean_usd": 0.018,
+    "mean_steps": 6.5,
+    "failure_modes": {}
+   },
+   "possible_duplicate": {
+    "pass_rate": 1.0,
+    "ci95": [
+     0.839,
+     1.0
+    ],
+    "mean_usd": 0.0256,
+    "mean_steps": 7.0,
+    "failure_modes": {}
+   }
+  }
+ },
+ "new_candidate_tasks": [
+  {
+   "pattern": "unmatched_payment: not finished (max_steps)",
+   "count": 1
+  },
+  {
+   "pattern": "unmatched_payment: verifier rejected: invoice_not_paid, out_of_scope_write, wrong_match",
+   "count": 1
+  },
+  {
+   "pattern": "quantity_mismatch: verifier rejected: wrong_amount",
+   "count": 1
+  },
+  {
+   "pattern": "price_mismatch: verifier rejected: wrong_status",
+   "count": 1
+  }
+ ],
+ "totals": {
+  "projected_monthly_revenue_usd": 975.78,
+  "live_billed_usd": 146.49,
+  "discovery_model_spend_usd": 3.573
+ }
+}
