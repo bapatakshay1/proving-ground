@@ -1,0 +1,6 @@
+out/
+results/
+.git/
+__pycache__/
+*.pyc
+docs/

@@ -254,14 +254,14 @@ def operate(admission=None, replay=None, pricing=None):
         price = pr["workflows"][kind]["price_per_outcome_usd"]
         if billed:
             cs.execute("insert into billing_ledger(ts,exception_id,kind,outcome,price,evidence) values(?,?,?,?,?,?)",
-                       (dt.datetime.now(dt.timezone.utc).isoformat(), x["id"], kind, "verified", price, json.dumps(v)))
+                       (dt.datetime.now(dt.timezone.utc).isoformat(), x["id"], kind, "verified", price, json.dumps({**v, "model": model, "model_usd": t["usd"]})))
         else:
             if claimed:  # the agent claimed done but the meter disagrees: reopen for a human, unbilled
                 cs.execute("update exceptions set status='escalated', resolution=? where id=?",
                            (json.dumps({"escalation_reason": "verifier_failed", "failures": v["failures"]}), x["id"]))
             cs.execute("insert into billing_ledger(ts,exception_id,kind,outcome,price,evidence) values(?,?,?,?,?,?)",
                        (dt.datetime.now(dt.timezone.utc).isoformat(), x["id"], kind, "routed_to_human", 0.0,
-                        json.dumps({"ended_by": t["ended_by"], "failures": (v or {}).get("failures"), "final": t["final"]})))
+                        json.dumps({"ended_by": t["ended_by"], "failures": (v or {}).get("failures"), "final": t["final"], "model": model, "model_usd": t["usd"]})))
         cs.commit()
         cs.close()
         return {"exception_id": x["id"], "kind": kind, "model": model, "ended_by": t["ended_by"], "billed": billed, "price": price if billed else 0.0,

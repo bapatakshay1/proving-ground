@@ -9,21 +9,80 @@ Hidden from the API on purpose: exceptions.pre_state/post_state/truth/held_out (
 import json
 import os
 import pathlib
+import shutil
 import sqlite3
 
-from fastapi import FastAPI, Header, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from . import actions, policy
 
 BASE_DB = pathlib.Path(os.environ.get("PG_DB", "out/twin.db"))
 SANDBOX_DIR = pathlib.Path(os.environ.get("PG_SANDBOXES", "out/sandboxes"))
-app = FastAPI(title="Proving Ground twin", version="0.1")
+app = FastAPI(title="Proving Ground twin", version="0.2")
+
+
+def _safe(name):
+    return bool(name) and name.replace("-", "").replace("_", "").isalnum()
+
+
+def _load_keys():
+    """PG_API_KEYS="token:actor,token2:actor2". When set, every request needs a bearer token; the actor
+    recorded in the audit log comes from the token, never from the client. Each actor gets a private sandbox."""
+    out = {}
+    for pair in os.environ.get("PG_API_KEYS", "").split(","):
+        if ":" in pair:
+            tok, actor = pair.split(":", 1)
+            if _safe(actor.strip()) and len(tok.strip()) >= 16:
+                out[tok.strip()] = actor.strip()
+    return out
+
+
+API_KEYS = _load_keys()
+OPEN_PATHS = {"/health", "/docs", "/openapi.json", "/schema", "/policy"}
+
+
+@app.middleware("http")
+async def auth(request: Request, call_next):
+    if not API_KEYS or request.url.path in OPEN_PATHS:
+        return await call_next(request)
+    raw = request.headers.get("authorization", "")
+    actor = API_KEYS.get(raw[7:].strip()) if raw.lower().startswith("bearer ") else None
+    if not actor:
+        return JSONResponse({"detail": "missing or invalid bearer token"}, status_code=401)
+    sandbox = request.headers.get("x-sandbox")
+    if sandbox and sandbox != actor:
+        return JSONResponse({"detail": f"your sandbox is '{actor}'; other sandboxes are not visible"}, status_code=403)
+    if request.method != "GET" and sandbox != actor:
+        return JSONResponse({"detail": f"writes go to your private sandbox: send X-Sandbox: {actor}"}, status_code=403)
+    if sandbox == actor:
+        SANDBOX_DIR.mkdir(parents=True, exist_ok=True)
+        if not (SANDBOX_DIR / f"{actor}.db").exists():
+            shutil.copy(BASE_DB, SANDBOX_DIR / f"{actor}.db")
+    headers = [(k, v) for k, v in request.scope["headers"] if k != b"x-actor"]
+    headers.append((b"x-actor", actor.encode()))
+    request.scope["headers"] = headers
+    return await call_next(request)
+
+
+@app.get("/me")
+def me(x_actor: str | None = Header(None)):
+    return {"actor": x_actor, "auth_enabled": bool(API_KEYS), "sandbox": x_actor if API_KEYS else None,
+            "how": "send X-Sandbox: <your actor> on every call to work in your private copy; POST /sandbox/reset to start over" if API_KEYS else "dev mode: no auth"}
+
+
+@app.post("/sandbox/reset")
+def sandbox_reset(x_actor: str | None = Header(None), x_sandbox: str | None = Header(None)):
+    if not API_KEYS:
+        raise HTTPException(400, "sandbox reset is only available when auth is enabled")
+    shutil.copy(BASE_DB, SANDBOX_DIR / f"{x_actor}.db")
+    return {"ok": True, "sandbox": x_actor, "reset_from": "base twin"}
 
 
 def db(sandbox):
     if sandbox:
-        if not sandbox.replace("-", "").replace("_", "").isalnum():
+        if not _safe(sandbox):
             raise HTTPException(400, "bad sandbox name")
         p = SANDBOX_DIR / f"{sandbox}.db"
         if not p.exists():

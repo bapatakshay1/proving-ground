@@ -1,0 +1,74 @@
+# Deployment
+
+Three shapes. The code is the same; what changes is where the twin runs and whose records fill it.
+
+## A. Hosted demo twin (what `railway up` deploys)
+
+One container, synthetic records, Railway. Every token gets a **private sandbox** that is copied from the
+base twin on first use; agents write only to their own copy; the base is read-only to everyone.
+
+```
+PG_API_KEYS="<token>:<actor>,<token2>:<actor2>"   # set in Railway variables; tokens >= 16 chars
+```
+
+Client contract (any agent, any language — it is plain HTTP):
+
+```
+Authorization: Bearer <token>
+X-Sandbox: <actor>          # on every call; writes without it are refused (403)
+GET  /me                    # who you are, which sandbox
+GET  /policy  /schema       # open, no token needed
+GET  /exceptions?kind=&status=open    GET /invoices/{id}   GET /pos?vendor_id=&sku=   ...
+POST /invoices/{id}/approve|hold|reject|dispute|link_po
+POST /bank_transactions/{id}/match|flag     POST /vendors/{id}/flag
+POST /exceptions/{id}/resolve|escalate
+POST /sandbox/reset         # start over from the base twin
+```
+
+The actor written to the audit log comes from the token, never from a header the client sets, so the
+verifier's out-of-scope check cannot be dodged by relabeling writes. Harness-only columns (truth,
+pre/post state, held-out flags) are never served.
+
+Filesystem is ephemeral on Railway: sandboxes vanish on redeploy (fine for a demo; attach a volume at
+`/app/out` to keep them). Cost: Railway hobby tier, a few dollars a month; the twin itself makes no
+model calls.
+
+What this shape is for: letting an outside agent builder, prospect, or lab run their agent against the
+sealed twin and get back a proof packet. It is the top of the funnel for selling operated workflows,
+not a product in itself (thesis: environments sell once; operated workflows bill monthly).
+
+## B. In the customer's cloud (the shape the thesis specifies)
+
+The security review is the long pole in the sale, so the twin runs inside the customer's VPC:
+
+1. Deploy this container next to their systems. Replace `src/seed.py` with an adapter that fills the
+   same tables from their system of record — `twin_api.py` is the adapter boundary, agents never see
+   the backend. Synthetic or masked records for the demo loop; real past cases for replay.
+2. Issue one token per agent role (`solver`, `breaker`) and one for the harness. Agents run from our
+   side over the API (`PG_API=https://twin.customer.internal PG_API_KEY=...`), or the whole loop runs
+   inside the VPC and only the proof packet leaves.
+3. Shadow mode = the same loop against live exceptions in a sandbox that is refreshed from production
+   nightly; nothing is billed until shadow pass rates hold near replay (stop rule in `loop.py`).
+4. Production = the sandbox *is* production: the `X-Sandbox` layer is removed and writes go to the
+   real system through the same actions, with the same audit log and the same verifier metering
+   each outcome into `billing_ledger`.
+
+Our cost in this shape: model API spend (measured per attempt, see billing.md) plus operations;
+hosting is the customer's.
+
+## C. Not recommended yet: an open task commons
+
+Letting anyone post tasks and anyone's agent solve them is Approach 4 in the thesis. The twin already
+supports it technically (per-token sandboxes, verifiers as code), but nothing obliges a poster to keep
+paying. Revisit only if shape A shows real inbound demand.
+
+## Deploying shape A
+
+```
+railway login                      # once
+railway init                       # or `railway link` to an existing project
+railway variables --set "PG_API_KEYS=$(python3 -c 'import secrets;print(secrets.token_urlsafe(24))'):demo-agent"
+railway up
+curl -s https://<app>.up.railway.app/health
+curl -s -H "Authorization: Bearer <token>" -H "X-Sandbox: demo-agent" https://<app>.up.railway.app/me
+```

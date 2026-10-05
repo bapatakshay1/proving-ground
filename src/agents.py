@@ -17,6 +17,8 @@ def api(method, path, sandbox=None, actor=None, body=None, params=None):
     if params:
         path += "?" + urllib.parse.urlencode({k: v for k, v in params.items() if v is not None})
     headers = {"Content-Type": "application/json"}
+    if os.environ.get("PG_API_KEY"):
+        headers["Authorization"] = "Bearer " + os.environ["PG_API_KEY"]
     if sandbox:
         headers["X-Sandbox"] = sandbox
     if actor:

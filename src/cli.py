@@ -9,7 +9,7 @@ import sys
 import time
 import urllib.request
 
-from . import llm, loop, seed, selfcheck
+from . import billing, llm, loop, seed, selfcheck
 
 PORT = int(os.environ.get("PG_PORT", "8765"))
 PID = pathlib.Path("out/api.pid")
@@ -66,6 +66,9 @@ def main():
     sub.add_parser("packet", help="render out/proof_packet.{json,md}")
     sub.add_parser("run-all", help="the whole loop; starts the API if needed")
     sub.add_parser("cost", help="print model spend for this process")
+    st = sub.add_parser("statement", help="monthly customer statement + our cost side, from the billing ledger")
+    st.add_argument("--db", default="out/sandboxes/live.db"); st.add_argument("--period", default=None, help="YYYY-MM (default: latest in ledger)")
+    st.add_argument("--discovery-credit", type=float, default=0.0, help="unused discovery-fee credit to apply")
     a = ap.parse_args()
     if a.cmd == "seed":
         print(json.dumps(seed.build("out/twin.db", a.seed), indent=1))
@@ -75,6 +78,8 @@ def main():
         serve()
     elif a.cmd == "stop":
         stop()
+    elif a.cmd == "statement":
+        print(billing.statement(a.db, a.period, a.discovery_credit)["markdown"])
     elif a.cmd == "run-all":
         started = serve(background=True)
         try:
