@@ -1,0 +1,15 @@
+CREATE TABLE settings(key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE vendors(id INTEGER PRIMARY KEY, name TEXT, bank_account TEXT, tax_rate REAL, payment_terms_days INTEGER, flagged INTEGER DEFAULT 0, flag_reason TEXT);
+CREATE TABLE purchase_orders(id INTEGER PRIMARY KEY, po_number TEXT UNIQUE, vendor_id INTEGER, created_at TEXT, status TEXT);
+CREATE TABLE po_lines(po_id INTEGER, line_no INTEGER, sku TEXT, description TEXT, qty_ordered REAL, unit_price REAL, PRIMARY KEY(po_id, line_no));
+CREATE TABLE goods_receipts(id INTEGER PRIMARY KEY, po_id INTEGER, line_no INTEGER, qty_received REAL, received_at TEXT);
+CREATE TABLE invoices(id INTEGER PRIMARY KEY, invoice_number TEXT, vendor_id INTEGER, po_number TEXT, invoice_date TEXT, due_date TEXT, subtotal REAL, tax REAL, total REAL, remit_to_account TEXT, status TEXT, approved_amount REAL, hold_reason TEXT, reject_reason TEXT, dispute_reason TEXT, note TEXT, resolved_by TEXT, resolved_at TEXT, paid_at TEXT);
+CREATE TABLE invoice_lines(invoice_id INTEGER, line_no INTEGER, sku TEXT, qty REAL, unit_price REAL, amount REAL, PRIMARY KEY(invoice_id, line_no));
+CREATE TABLE bank_transactions(id INTEGER PRIMARY KEY, txn_date TEXT, amount REAL, counterparty TEXT, memo TEXT, status TEXT, matched_invoice_ids TEXT, flag_reason TEXT);
+CREATE TABLE exceptions(id INTEGER PRIMARY KEY, kind TEXT, entity_type TEXT, entity_id INTEGER, opened_at TEXT, status TEXT, resolved_at TEXT, resolved_by TEXT, resolution TEXT, handling_minutes REAL, pre_state TEXT, post_state TEXT, truth TEXT, held_out INTEGER DEFAULT 0);
+CREATE TABLE audit_log(id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, actor TEXT, action TEXT, entity_type TEXT, entity_id INTEGER, detail TEXT);
+CREATE TABLE billing_ledger(id INTEGER PRIMARY KEY AUTOINCREMENT, ts TEXT, exception_id INTEGER, kind TEXT, outcome TEXT, price REAL, evidence TEXT);
+CREATE INDEX idx_inv_vendor ON invoices(vendor_id);
+CREATE INDEX idx_inv_po ON invoices(po_number);
+CREATE INDEX idx_exc_kind ON exceptions(kind, status);
+CREATE INDEX idx_audit_actor ON audit_log(actor);
