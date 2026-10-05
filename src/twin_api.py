@@ -87,6 +87,11 @@ def _base_url(request: Request):
     return f"{proto}://{request.headers.get('x-forwarded-host', request.headers.get('host', 'localhost'))}"
 
 
+def _public_url(request: Request):
+    """The URL a payer sees (behind Railway's TLS terminator the app itself sees http)."""
+    return _base_url(request) + request.url.path
+
+
 def _menu(request: Request):
     with db(None) as c:
         st = stats_for(c)
@@ -564,6 +569,8 @@ class PaymentRequired(Exception):
 def _required(actor, resource, error=None):
     """The 402: the diner's JSON body plus, when x402 is configured, the spec'd PAYMENT-REQUIRED header (base64 JSON)."""
     body = diner.payment_required(actor)
+    if error:
+        body["detail"] = f"payment rejected: {error}"
     body["top_up"]["methods"] = _topup_methods(resource.rsplit("/exceptions", 1)[0] if "/exceptions" in resource else resource.rsplit("/seats", 1)[0])
     # HTTP header names are case-insensitive: the spec'd PAYMENT-REQUIRED (base64 PaymentRequired) replaces the
     # plain "Payment-Required: true" flag rather than sitting next to it, or clients see two values for one name.
@@ -626,7 +633,7 @@ def claim(sandbox, actor, metered, fn, xid, arg, payment=None, resource=""):
 
 def _claim_route(request, x_sandbox, x_actor, x_seat, payment, fn, xid, arg):
     try:
-        out = claim(x_sandbox, x_actor, x_seat == "1", fn, xid, arg, payment, str(request.url))
+        out = claim(x_sandbox, x_actor, x_seat == "1", fn, xid, arg, payment, _public_url(request))
     except PaymentRequired as e:
         return JSONResponse(e.body, status_code=402, headers=e.headers)
     if out.get("payment"):
@@ -654,10 +661,10 @@ def topup_x402(request: Request, actor: str, x_actor: str | None = Header(None),
     if x_seat != "1":
         raise HTTPException(400, "env-key actors are unmetered; nothing to top up")
     if not payment_signature:
-        e = _required(actor, str(request.url), "send a PAYMENT-SIGNATURE header with an x402 payment")
+        e = _required(actor, _public_url(request), "send a PAYMENT-SIGNATURE header with an x402 payment")
         return JSONResponse(e.body, status_code=402, headers=e.headers)
     try:
-        settled = settle_payment(actor, payment_signature, str(request.url), min_credits=1)
+        settled = settle_payment(actor, payment_signature, _public_url(request), min_credits=1)
     except PaymentRequired as e:
         return JSONResponse(e.body, status_code=402, headers=e.headers)
     return JSONResponse({"ok": True, "seat": diner.seat(actor), "payment": settled}, headers={"PAYMENT-RESPONSE": x402.settlement_header(settled)})
