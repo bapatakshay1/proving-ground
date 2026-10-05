@@ -74,7 +74,7 @@ paying. Revisit only if shape A shows real inbound demand.
 railway login                      # once
 railway init                       # or `railway link` to an existing project
 railway variables --set "PG_API_KEYS=$(python3 -c 'import secrets;print(secrets.token_urlsafe(24))'):demo-agent"
-railway up
+railway up --detach --ci --service proving-ground   # same command for every redeploy
 curl -s https://<app>.up.railway.app/health
 curl -s -H "Authorization: Bearer <token>" -H "X-Sandbox: demo-agent" https://<app>.up.railway.app/me
 ```
