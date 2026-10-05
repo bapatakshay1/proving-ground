@@ -93,11 +93,14 @@ def fit(result, cap=30000):
     text = json.dumps(result)
     if len(text) <= cap:
         return text
-    if isinstance(result, list):
-        keep = list(result)
-        while keep and len(json.dumps(keep)) > cap - 200:
+    rows = result if isinstance(result, list) else result.get("results") if isinstance(result, dict) else None
+    if isinstance(rows, list):
+        keep = list(rows)
+        while keep and len(json.dumps(keep)) > cap - 300:
             keep.pop()
-        return json.dumps({"results": keep, "truncated": True, "returned": len(keep), "note": "more results exist; narrow the search with filters"})
+        env = dict(result) if isinstance(result, dict) else {"total": len(rows)}
+        env.update({"results": keep, "returned": len(keep), "truncated": True, "note": "response too large; only the first results are shown - narrow the search with filters"})
+        return json.dumps(env)
     return json.dumps({"truncated": True, "partial": text[:cap - 200]})
 
 
@@ -105,7 +108,7 @@ def tool_loop(model, system, user, tools, dispatch, terminal, max_steps=14, max_
     """Run a tool-using agent until it calls a terminal tool, stops calling tools, or hits max_steps.
     dispatch(name, args) -> JSON-serialisable result. Returns a transcript dict."""
     messages = [{"role": "system", "content": system}, {"role": "user", "content": user}]
-    steps, usd, tokens, ended_by = [], 0.0, 0, None
+    steps, usd, tokens, ended_by, nudged = [], 0.0, 0, None, False
     for _ in range(max_steps):
         msg, usage = chat(model, messages, tools, max_tokens=max_tokens)
         usd += usage.get("cost") or 0.0
@@ -113,6 +116,11 @@ def tool_loop(model, system, user, tools, dispatch, terminal, max_steps=14, max_
         messages.append({k: v for k, v in msg.items() if k in ("role", "content", "tool_calls")})
         calls = msg.get("tool_calls") or []
         if not calls:
+            if terminal and not nudged:  # the agent narrated instead of acting: one reminder, then it counts as unfinished
+                nudged = True
+                messages.append({"role": "user", "content": "You have not finished. Apply the outcome with the write tools, then call "
+                                 + " or ".join(sorted(terminal)) + ". Do not reply with text."})
+                continue
             ended_by = "final_message"
             break
         for tc in calls:

@@ -22,8 +22,10 @@ CONTRACT_BAR = 0.90               # pass rate the workflow is priced against
 PRICE_FRACTION = 0.5              # price per outcome = half the customer's current unit cost
 SERVE_OVERHEAD = 0.25             # exception handling / compute overhead on measured model spend
 SHADOW_GAP_MAX = 10.0             # stop rule: live pass rate more than 10 pts below replay
+ANNUAL_MIN_FRACTION = 0.8         # annual minimum = 80% of volume x lower CI bound of the pass rate, so the floor is defensible
+OPS_ALLOWANCE = 0.25              # $/verified outcome for twin hosting, verifier upkeep, audits and support (assumption, not measured)
 WORKERS = int(os.environ.get("PG_WORKERS", "6"))
-ADMIT_SAMPLE, LLM_BREAK_SAMPLE, OPERATE_PER_KIND = 25, 4, 8
+ADMIT_SAMPLE, LLM_BREAK_SAMPLE, OPERATE_PER_KIND = 25, 8, 8
 
 
 def jdump(name, obj):
@@ -144,18 +146,20 @@ def admit(candidates=None):
         cs.close()
         drop(sb)
         llm_rate = llm_pass / max(1, len(llm_sample))
-        best_name, best = max(strategies.items(), key=lambda kv: kv[1])
-        worst_blind = max(best, llm_rate)
-        admitted = agreement >= HISTORY_AGREEMENT_MIN and worst_blind <= BLIND_PASS_MAX
+        # the blind pass rate is an estimate; screen only when its lower 95% bound clears the threshold
+        rates = {**{k: (v, len(sample)) for k, v in strategies.items()}, "llm_breaker": (llm_rate, len(llm_sample))}
+        best_name, (best, best_n) = max(rates.items(), key=lambda kv: (kv[1][0], kv[1][1]))
+        best_lo = wilson(best, best_n)[0]
+        admitted = agreement >= HISTORY_AGREEMENT_MIN and best_lo <= BLIND_PASS_MAX
         reason = None
         if agreement < HISTORY_AGREEMENT_MIN:
             reason = f"verifier agrees with human history only {agreement:.0%}"
-        elif worst_blind > BLIND_PASS_MAX:
-            reason = (f"record-blind shortcut '{best_name if best >= llm_rate else 'llm breaker'}' passes {worst_blind:.0%}: the outcome is a fixed rule, "
-                      "not a judgement task; route it to deterministic automation / a hard control instead of outcome pricing")
+        elif best_lo > BLIND_PASS_MAX:
+            reason = (f"record-blind shortcut '{best_name}' passes {best:.0%} (95% lower bound {best_lo:.0%}) without reading the records: "
+                      "the outcome is a fixed rule, not a judgement task; route it to deterministic automation / a hard control instead of outcome pricing")
         report["workflows"][kind] = {"admitted": admitted, "reason": reason, "verifier": policy.VERIFIER_TEXT[kind],
                                      "history_agreement": round(agreement, 3), "history_n": len(resolved),
-                                     "blind_strategies": strategies, "best_blind": {"strategy": best_name, "pass_rate": best},
+                                     "blind_strategies": strategies, "best_blind": {"strategy": best_name, "pass_rate": round(best, 3), "n": best_n, "ci95": wilson(best, best_n)},
                                      "llm_breaker": {"model": llm.MODELS["breaker"], "n": len(llm_sample), "pass_rate": round(llm_rate, 3), "runs": llm_runs}}
     conn.close()
     jdump("admission.json", report)
@@ -282,9 +286,16 @@ def operate(admission=None, replay=None, pricing=None):
                                 "model_usd": round(sum(r["usd"] for r in rs), 4)}
     # return path: what the agents could not finish comes back as candidate work
     returned = collections.Counter()
-    for kind, w in out["by_kind"].items():
-        for h in w["routed_to_human"]:
-            returned[f"{kind}: {h['why'][:80]}"] += 1
+    for r in results:
+        if r["billed"]:
+            continue
+        if r["escalation_reason"]:
+            why = "escalated by agent"
+        elif r["failures"]:
+            why = "verifier rejected: " + ", ".join(sorted({f.split(":")[0] for f in r["failures"]}))
+        else:
+            why = f"not finished ({r['ended_by']})"
+        returned[f"{r['kind']}: {why}"] += 1
     out["new_candidate_tasks"] = [{"pattern": k, "count": v} for k, v in returned.most_common()]
     out["billing_total_usd"] = round(sum(r["price"] for r in results), 2)
     jdump("operate.json", out)
@@ -296,22 +307,27 @@ def operate(admission=None, replay=None, pricing=None):
 def price(candidates=None, admission=None, replay=None):
     cands, adm, rep = candidates or jload("candidates.json"), admission or jload("admission.json"), replay or jload("replay.json")
     rec = {c["kind"]: c for c in cands["candidates"] if c.get("records")}
-    out = {"assumptions": {"price_fraction_of_current_cost": PRICE_FRACTION, "serve_overhead_on_model_spend": SERVE_OVERHEAD, "contract_bar": CONTRACT_BAR}, "workflows": {}}
+    out = {"assumptions": {"price_fraction_of_current_cost": PRICE_FRACTION, "serve_overhead_on_model_spend": SERVE_OVERHEAD, "contract_bar": CONTRACT_BAR,
+                           "annual_minimum_fraction": ANNUAL_MIN_FRACTION, "ops_allowance_per_outcome_usd": OPS_ALLOWANCE,
+                           "discovery_run": "fixed fee, credited against first-year outcome fees (not counted as revenue)"}, "workflows": {}}
     for kind, w in adm["workflows"].items():
         if not w.get("admitted"):
             continue
         r, rp = rec[kind]["records"], rep["by_kind"][kind]
         cost_now = r["current_unit_cost_usd"]
         p = round(cost_now * PRICE_FRACTION, 2)
-        serve = round(rp["mean_usd"] * (1 + SERVE_OVERHEAD), 4)
+        # model spend is paid on every attempt but only verified outcomes bill, so cost to serve is per verified outcome
+        per_verified = rp["mean_usd"] / max(rp["pass_rate"], 0.05)
+        serve = round(per_verified * (1 + SERVE_OVERHEAD) + OPS_ALLOWANCE, 4)
         vol = r["monthly_volume"]
         out["workflows"][kind] = {
             "monthly_volume": vol, "avg_handling_minutes": r["avg_handling_minutes"], "current_unit_cost_usd": cost_now,
             "price_per_outcome_usd": p, "pass_rate": rp["pass_rate"], "pass_rate_ci95": rp["ci95"],
-            "measured_model_cost_per_case_usd": rp["mean_usd"], "cost_to_serve_usd": serve,
+            "measured_model_cost_per_attempt_usd": rp["mean_usd"], "model_cost_per_verified_outcome_usd": round(per_verified, 4), "cost_to_serve_usd": serve,
             "gross_margin": round((p - serve) / p, 3) if p else None,
             "projected_monthly_revenue_usd": round(vol * rp["pass_rate"] * p, 2),
             "projected_monthly_customer_saving_usd": round(vol * rp["pass_rate"] * (cost_now - p), 2),
+            "proposed_annual_minimum_outcomes": int(12 * vol * rp["ci95"][0] * ANNUAL_MIN_FRACTION),
             "meets_contract_bar": rp["pass_rate"] >= CONTRACT_BAR}
     jdump("pricing.json", out)
     return out
@@ -334,6 +350,8 @@ def packet():
             wf["live"] = op["by_kind"].get(kind)
         workflows.append(wf)
     admitted = [w for w in workflows if w["admission"]["admitted"]]
+    spend = (cands.get("usd") or 0.0) + sum(r["usd"] for w in adm["workflows"].values() for r in (w.get("llm_breaker") or {}).get("runs", []))
+    spend += sum(c["usd"] for f in OUT.glob("replay_*.json") for c in json.loads(f.read_text())["cases"]) + sum(r["usd"] for r in op["cases"])
     tiers = {}
     for f in sorted(OUT.glob("replay_*.json")):
         d = json.loads(f.read_text())
@@ -341,11 +359,10 @@ def packet():
                              for k, v in d["by_kind"].items()}
     p = {"generated_at": dt.datetime.now(dt.timezone.utc).isoformat(), "company": settings.get("company"), "as_of": settings.get("as_of"),
          "models": llm.MODELS, "thresholds": {**adm["thresholds"], **pr["assumptions"], "shadow_gap_max_pts": SHADOW_GAP_MAX},
-         "gates": {"all_admitted_verifiers_survive_breaker": all(w["admission"]["admitted"] for w in admitted) and len(admitted) >= 5,
-                   "admitted_count": len(admitted), "stop_rule_tripped": op["stop_rule"]["tripped"]},
+         "gates": {"five_verifiers_survive_breaker": len(admitted) >= 5, "admitted_count": len(admitted), "stop_rule_tripped": op["stop_rule"]["tripped"]},
          "workflows": workflows, "solver_tiers": tiers, "new_candidate_tasks": op["new_candidate_tasks"],
          "totals": {"projected_monthly_revenue_usd": round(sum(w["pricing"]["projected_monthly_revenue_usd"] for w in admitted), 2),
-                    "live_billed_usd": op["billing_total_usd"], "discovery_model_spend_usd": llm.COST.snapshot()}}
+                    "live_billed_usd": op["billing_total_usd"], "discovery_model_spend_usd": round(spend, 4)}}
     jdump("proof_packet.json", p)
     (OUT / "proof_packet.md").write_text(render_md(p))
     return p
@@ -355,7 +372,7 @@ def render_md(p):
     L = [f"# Proof packet — {p['company']} (as of {p['as_of']})", "",
          f"Generated {p['generated_at'][:19]}Z. Proposer `{p['models']['proposer']}`, solver `{p['models']['solver']}`, "
          f"breaker `{p['models']['breaker']}`, verifier = code keyed to the system of record.", "",
-         f"**Gate — all admitted verifiers survive the breaker: {'PASS' if p['gates']['all_admitted_verifiers_survive_breaker'] else 'FAIL'}** "
+         f"**Gate — at least five verifiers survive the breaker: {'PASS' if p['gates']['five_verifiers_survive_breaker'] else 'FAIL'}** "
          f"({p['gates']['admitted_count']} admitted). Stop rule tripped: {p['gates']['stop_rule_tripped'] or 'none'}.", "",
          "| Workflow | Monthly vol | Unit cost now | Admitted | Replay pass (n=20) | Price/outcome | Cost to serve | Margin | Live metered | Proj. monthly rev |",
          "|---|---|---|---|---|---|---|---|---|---|"]
@@ -374,8 +391,9 @@ def render_md(p):
               f"*Why it needs judgement (proposer):* {w.get('needs_judgement')}", "",
               f"**Verifier.** {w['verifier']}", "",
               f"**Admission.** Verifier agrees with human history on {a['history_agreement']:.1%} of {a['history_n']} resolved cases. "
-              f"Record-blind shortcuts: " + ", ".join(f"{k} {v:.0%}" for k, v in a["blind_strategies"].items()) +
+              f"Record-blind shortcuts (n={a['best_blind'].get('n', 25)}): " + ", ".join(f"{k} {v:.0%}" for k, v in a["blind_strategies"].items()) +
               f". LLM breaker ({a['llm_breaker']['model']}, write-only tools): {a['llm_breaker']['pass_rate']:.0%} of {a['llm_breaker']['n']}. "
+              f"Best blind {a['best_blind']['pass_rate']:.0%} (95% CI {a['best_blind']['ci95'][0]:.0%}–{a['best_blind']['ci95'][1]:.0%}) vs. screen-out threshold {p['thresholds']['blind_pass_max']:.0%} on the lower bound. "
               f"→ **{'ADMITTED' if a['admitted'] else 'NOT ADMITTED'}**" + (f": {a['reason']}" if a["reason"] else "") + "", ""]
         if a["admitted"]:
             r, pr, lv = w["replay"], w["pricing"], w.get("live") or {}
@@ -384,10 +402,13 @@ def render_md(p):
                   f"Mean {r['mean_steps']} tool calls, ${r['mean_usd']:.4f} model spend per case.", "",
                   "Known failure modes: " + (", ".join(f"{k} ×{v}" for k, v in r["failure_modes"].items()) or "none observed") + ".", "",
                   f"**Price.** Current unit cost ${pr['current_unit_cost_usd']} ({pr['avg_handling_minutes']} clerk-minutes). Price per verified outcome "
-                  f"${pr['price_per_outcome_usd']}. Cost to serve ${pr['cost_to_serve_usd']:.3f} → gross margin {pr['gross_margin']:.0%}. "
+                  f"${pr['price_per_outcome_usd']}. Cost to serve ${pr['cost_to_serve_usd']:.3f} (measured ${pr['measured_model_cost_per_attempt_usd']:.4f} model spend per attempt "
+                  f"÷ {pr['pass_rate']:.0%} verified = ${pr['model_cost_per_verified_outcome_usd']:.4f}, +{p['thresholds']['serve_overhead_on_model_spend']:.0%} overhead, "
+                  f"+${p['thresholds']['ops_allowance_per_outcome_usd']} operations allowance) → gross margin {pr['gross_margin']:.0%}. "
                   f"At {pr['monthly_volume']}/month and {pr['pass_rate']:.0%} verified: ${pr['projected_monthly_revenue_usd']}/month revenue, "
                   f"${pr['projected_monthly_customer_saving_usd']}/month customer saving. Contract bar {p['thresholds']['contract_bar']:.0%}: "
-                  f"{'met' if pr['meets_contract_bar'] else 'NOT met'}.", ""]
+                  f"{'met' if pr['meets_contract_bar'] else 'NOT met'}."
+                  + (f" Proposed annual minimum: {pr['proposed_annual_minimum_outcomes']:,} verified outcomes." if "proposed_annual_minimum_outcomes" in pr else ""), ""]
             if lv:
                 L += [f"**Live backlog (metered).** {lv['billed']}/{lv['n']} verified and billed (${lv['billed_usd']}); gap to replay {lv['gap_pts']:+.1f} pts. "
                       f"Routed to a human unbilled: " + ("; ".join(f"#{h['exception_id']} {h['why']}" for h in lv["routed_to_human"]) or "none") + ".", ""]
@@ -402,7 +423,7 @@ def render_md(p):
     t = p["totals"]
     L += ["", "## Totals", "", f"- Projected monthly revenue across admitted workflows: **${t['projected_monthly_revenue_usd']}**",
           f"- Billed on the live backlog sample: ${t['live_billed_usd']}",
-          f"- Model spend for this discovery run: ${t['discovery_model_spend_usd']['usd']} over {t['discovery_model_spend_usd']['calls']} calls", "",
+          f"- Model spend for this discovery run (proposer + breaker + both solver tiers + live): ${t['discovery_model_spend_usd']}", "",
           "Thresholds (proposals, not findings): " + json.dumps(p["thresholds"]), ""]
     return "\n".join(L)
 

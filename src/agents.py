@@ -1,6 +1,8 @@
 """The role-separated agents. Proposer, solver and breaker are different model families;
 the verifier is code (policy.py). Agents touch the twin only through the HTTP API."""
+import ast
 import json
+import operator
 import os
 import urllib.error
 import urllib.parse
@@ -31,6 +33,39 @@ def api(method, path, sandbox=None, actor=None, body=None, params=None):
             return {"error": f"HTTP {e.code}"}
 
 
+_OPS = {ast.Add: operator.add, ast.Sub: operator.sub, ast.Mult: operator.mul, ast.Div: operator.truediv,
+        ast.USub: operator.neg, ast.UAdd: operator.pos, ast.Pow: operator.pow}
+_FN = {"min": min, "max": max, "round": round, "abs": abs, "sum": sum}
+
+
+def calculate(expr):
+    """Exact arithmetic for the agent: numbers, + - * / ** ( ), min/max/round/abs/sum, lists. Nothing else."""
+    def ev(n):
+        if isinstance(n, ast.Expression):
+            return ev(n.body)
+        if isinstance(n, ast.Constant) and isinstance(n.value, (int, float)) and not isinstance(n.value, bool):
+            return n.value
+        if isinstance(n, ast.BinOp) and type(n.op) in _OPS:
+            r = ev(n.right)
+            if isinstance(n.op, ast.Pow) and abs(r) > 8:
+                raise ValueError("exponent too large")
+            return _OPS[type(n.op)](ev(n.left), r)
+        if isinstance(n, ast.UnaryOp) and type(n.op) in _OPS:
+            return _OPS[type(n.op)](ev(n.operand))
+        if isinstance(n, ast.Call) and isinstance(n.func, ast.Name) and n.func.id in _FN and not n.keywords:
+            return _FN[n.func.id](*[ev(x) for x in n.args])
+        if isinstance(n, (ast.List, ast.Tuple)):
+            return [ev(x) for x in n.elts]
+        raise ValueError("unsupported expression")
+    if len(expr) > 2000:
+        raise ValueError("expression too long")
+    v = ev(ast.parse(expr.strip(), mode="eval"))
+    out = {"expression": expr, "result": v}
+    if isinstance(v, (int, float)):
+        out["rounded_2dp"] = round(v + 1e-12, 2)
+    return out
+
+
 def _t(name, desc, props=None, required=None):
     return {"type": "function", "function": {"name": name, "description": desc,
             "parameters": {"type": "object", "properties": props or {}, "required": required or []}}}
@@ -54,6 +89,9 @@ READ_TOOLS = [
     _t("search_vendors", "Find vendors by (partial, case-insensitive) name, e.g. a bank counterparty string.", {"name": _s}, ["name"]),
     _t("get_bank_transaction", "A bank transaction.", {"bank_transaction_id": _i}, ["bank_transaction_id"]),
     _t("list_resolved_examples", "Recently resolved exceptions of a kind, with the clerk's resolution summary.", {"kind": _s, "limit": _i}, ["kind"]),
+    _t("calculate", "Evaluate an arithmetic expression exactly (+ - * / parentheses, min, max, round, abs, sum of a list). "
+       "Use it for every amount you derive: variances, min(invoiced, received) x price, tax, pair sums. Never do arithmetic in your head.",
+       {"expression": _s}, ["expression"]),
 ]
 WRITE_TOOLS = [
     _t("approve_invoice", "Approve an invoice. approved_amount defaults to the invoice total; set it lower to short-pay.", {"invoice_id": _i, "approved_amount": _n, "note": _s}, ["invoice_id"]),
@@ -75,6 +113,11 @@ def dispatcher(sandbox, actor):
         a = {k: v for k, v in a.items() if v not in ("", None)}  # models pad unused filters with ""
         g = lambda path, **params: api("GET", path, sandbox, actor, params=params or None)  # noqa: E731
         p = lambda path, body: api("POST", path, sandbox, actor, body=body)  # noqa: E731
+        if name == "calculate":
+            try:
+                return calculate(str(a.get("expression", "")))
+            except Exception as e:  # noqa: BLE001
+                return {"error": f"cannot evaluate: {e}"}
         if name == "get_policy":
             return g("/policy")
         if name == "get_exception":
@@ -164,9 +207,13 @@ If the policy cannot be applied (data missing, ambiguous match, rule does not co
 Hard limits: only change the record(s) named by the exception (and, for payments, the invoices you match). Never modify
 other invoices, never alter an earlier invoice when handling a possible duplicate. One state change per record.
 
-Search discipline: list results are capped. Before concluding that no matching invoice or PO exists, search with the
-specific filter (invoice_number, sku, exact amount via min_total=max_total) and a limit of 200, and consider every
-status the policy names (e.g. approved OR paid)."""
+Search discipline: list results are capped; every search reports total vs returned and a truncated flag. Before
+concluding that no matching invoice or PO exists, search with the specific filter (invoice_number, sku, exact amount via
+min_total=max_total, date_to) and a limit of 200, and consider every status the policy names (e.g. approved OR paid).
+
+Arithmetic discipline: derive every amount with the calculate tool - the variance, min(invoiced, received) x unit price,
+tax, and the sum of any invoice pair - and confirm a candidate pair sums to the payment before matching it. A result the
+verifier checks to the cent must come from calculate, not from mental math."""
 
 
 def solve(exception, sandbox, actor, model=None, max_steps=14):

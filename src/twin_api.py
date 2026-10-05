@@ -159,9 +159,10 @@ def search_invoices(vendor_id: int | None = None, invoice_number: str | None = N
         q += " and invoice_date<=?"; a.append(date_to)
     if min_total is not None and max_total is not None and min_total == max_total:
         q = q.replace(" and total>=?", " and abs(total-?)<0.005").replace(" and total<=?", " and abs(total-?)<0.005")
-    q += " order by invoice_date desc, id desc limit ?"; a.append(limit)
     with db(x_sandbox) as c:
-        return [dict(r) for r in c.execute(q, a)]
+        total = c.execute("select count(*) from (" + q + ")", a).fetchone()[0]
+        rows = [dict(r) for r in c.execute(q + " order by invoice_date desc, id desc limit ?", a + [limit])]
+    return {"results": rows, "total": total, "returned": len(rows), "truncated": total > len(rows)}
 
 
 @app.get("/pos/{po_number}")
@@ -181,14 +182,14 @@ def search_pos(vendor_id: int, status: str | None = None, sku: str | None = None
     q += " where p.vendor_id=?"
     if status:
         q += " and p.status=?"; a.append(status)
-    q += " order by p.created_at desc limit ?"; a.append(limit)
     with db(x_sandbox) as c:
+        total = c.execute("select count(*) from (" + q + ")", a).fetchone()[0]
         out = []
-        for r in c.execute(q, a):
+        for r in c.execute(q + " order by p.created_at desc limit ?", a + [limit]):
             po = po_view(c, r["po_number"])
             po["lines"] = [{k: l[k] for k in ("sku", "qty_ordered", "unit_price", "qty_received", "qty_invoiced")} for l in po["lines"]]
             out.append(po)
-        return out
+    return {"results": out, "total": total, "returned": len(out), "truncated": total > len(out)}
 
 
 @app.get("/vendors/{vid}")
@@ -207,7 +208,7 @@ def search_vendors(name: str, x_sandbox: str | None = Header(None)):
         like = [dict(r) for r in c.execute("select * from vendors where upper(name) like ? limit 10", (f"%{name.upper()}%",))]
         if v and v not in like:
             like.insert(0, v)
-        return like
+        return {"results": like, "total": len(like), "returned": len(like), "truncated": False}
 
 
 @app.get("/bank_transactions/{tid}")
