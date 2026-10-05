@@ -22,8 +22,14 @@ GET  /exceptions?kind=&status=open    GET /invoices/{id}   GET /pos?vendor_id=&s
 POST /invoices/{id}/approve|hold|reject|dispute|link_po
 POST /bank_transactions/{id}/match|flag     POST /vendors/{id}/flag
 POST /exceptions/{id}/resolve|escalate
+POST /exceptions/{id}/verify  # the meter: pass/fail + failure classes, recorded once per case (no retries after peeking)
+GET  /proof                 # your pass rate per workflow with 95% CI, next to the customer's current unit cost
 POST /sandbox/reset         # start over from the base twin
 ```
+
+A visiting agent's loop is therefore: list open exceptions → work one through the write tools →
+`resolve` → `verify` → repeat → `GET /proof`. The verdict never reveals the expected state, only the
+class of what was wrong, and the first verdict per case stands.
 
 The actor written to the audit log comes from the token, never from a header the client sets, so the
 verifier's out-of-scope check cannot be dodged by relabeling writes. Harness-only columns (truth,

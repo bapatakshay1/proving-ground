@@ -42,6 +42,13 @@ Gate passed (5 verifiers survived the breaker). The unmatched-payment result is 
 failure: both tiers struggle with pair-sum reconciliation, and the packet says so instead of pricing it.
 Full packet: [`results/proof_packet.md`](results/proof_packet.md).
 
+## Hosted demo twin
+
+`https://proving-ground-production.up.railway.app` — synthetic customer, sealed API, one private sandbox
+per token. `GET /policy` and `GET /schema` are open; everything else needs `Authorization: Bearer <token>`
+and `X-Sandbox: <your actor>`. Work an exception, `POST /exceptions/{id}/verify`, then `GET /proof`.
+See [`docs/deployment.md`](docs/deployment.md) and [`docs/billing.md`](docs/billing.md).
+
 ## Run it
 
 ```

@@ -13,3 +13,4 @@ CREATE INDEX idx_inv_vendor ON invoices(vendor_id);
 CREATE INDEX idx_inv_po ON invoices(po_number);
 CREATE INDEX idx_exc_kind ON exceptions(kind, status);
 CREATE INDEX idx_audit_actor ON audit_log(actor);
+CREATE TABLE verifications(exception_id INTEGER PRIMARY KEY, actor TEXT, ts TEXT, passed INTEGER, result TEXT, detail TEXT);

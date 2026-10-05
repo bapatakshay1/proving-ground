@@ -221,7 +221,20 @@ def verify(conn, kind, eid, actor=None, exception_id=None):
 
     if actor:
         allowed = scope(conn, kind, eid, exp)
-        for a in conn.execute("select entity_type, entity_id, action from audit_log where actor=?", (actor,)):
+        # One actor may work many cases in sequence. Its writes are segmented by its own terminal actions
+        # (resolve/escalate): this case answers for every write since the actor's previous terminal action,
+        # up to its own - or, if it is the actor's latest case, everything since (so later tampering is caught).
+        terms = [r["id"] for r in conn.execute("select id from audit_log where actor=? and entity_type='exception' and action in "
+                                               "('resolve_exception','escalate_exception') order by id", (actor,))]
+        this = conn.execute("select id from audit_log where actor=? and entity_type='exception' and entity_id=? and action in "
+                            "('resolve_exception','escalate_exception') order by id limit 1", (actor, exception_id)).fetchone() if exception_id is not None else None
+        lo, hi = 0, float("inf")
+        if this:
+            lo = max([t for t in terms if t < this["id"]], default=0)
+            hi = this["id"] if any(t > this["id"] for t in terms) else float("inf")
+        for a in conn.execute("select id, entity_type, entity_id, action from audit_log where actor=? and id>? order by id", (actor, lo)):
+            if a["id"] > hi:
+                break
             if a["entity_type"] == "exception":
                 if exception_id is not None and a["entity_id"] != exception_id:
                     failures.append(f"out_of_scope_write:exception:{a['entity_id']}")

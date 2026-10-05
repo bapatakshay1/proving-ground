@@ -6,7 +6,9 @@ Headers:
 
 Hidden from the API on purpose: exceptions.pre_state/post_state/truth/held_out (harness-only columns).
 """
+import datetime as dt
 import json
+import math
 import os
 import pathlib
 import shutil
@@ -72,6 +74,74 @@ def me(x_actor: str | None = Header(None)):
             "how": "send X-Sandbox: <your actor> on every call to work in your private copy; POST /sandbox/reset to start over" if API_KEYS else "dev mode: no auth"}
 
 
+VERIF_DDL = "create table if not exists verifications(exception_id integer primary key, actor text, ts text, passed integer, result text, detail text)"
+
+
+def _wilson(p, n, z=1.96):
+    if n == 0:
+        return [0.0, 0.0]
+    c = p + z * z / (2 * n); s = z * math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)); d = 1 + z * z / n
+    return [round((c - s) / d, 3), round((c + s) / d, 3)]
+
+
+def record_verdict(c, xid, actor):
+    """The meter. Runs the verifier on a worked exception and records the verdict once; later reads return
+    the first verdict, so nobody can read it, patch the record and try again. Public result carries failure
+    classes only, never the expected state; the full detail stays server-side for audits and disputes."""
+    c.execute(VERIF_DDL)
+    x = c.execute("select * from exceptions where id=?", (xid,)).fetchone()
+    if not x:
+        raise HTTPException(404, "not found")
+    prev = c.execute("select result from verifications where exception_id=?", (xid,)).fetchone()
+    if prev:
+        return {**json.loads(prev["result"]), "recorded_earlier": True}
+    if x["status"] == "open":
+        raise HTTPException(409, "exception is still open; resolve or escalate it first")
+    if x["status"] == "escalated":
+        v, classes = {"passed": False, "failures": ["escalated"], "expected": None, "actual": None}, ["escalated"]
+    else:
+        v = policy.verify(c, x["kind"], x["entity_id"], actor=actor, exception_id=xid)
+        classes = sorted({f.split(":")[0] for f in v["failures"]})
+    public = {"exception_id": xid, "kind": x["kind"], "passed": bool(v["passed"]), "failure_classes": classes,
+              "verified_at": dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat()}
+    c.execute("insert into verifications(exception_id,actor,ts,passed,result,detail) values(?,?,?,?,?,?)",
+              (xid, actor, public["verified_at"], int(v["passed"]), json.dumps(public), json.dumps(v)))
+    return public
+
+
+@app.post("/exceptions/{xid}/verify")
+def verify_outcome(xid: int, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None)):
+    if not x_sandbox:
+        raise HTTPException(400, "verification runs against a sandbox: send X-Sandbox")
+    with db(x_sandbox) as c:
+        out = record_verdict(c, xid, x_actor)
+        c.commit()
+        return out
+
+
+@app.get("/proof")
+def proof(x_sandbox: str | None = Header(None), x_actor: str | None = Header(None)):
+    """What a visiting agent walks away with: pass rate per workflow on the cases it worked, with the
+    customer's current unit cost next to it."""
+    if not x_sandbox:
+        raise HTTPException(400, "send X-Sandbox")
+    with db(x_sandbox) as c:
+        c.execute(VERIF_DDL)
+        rate = float(policy.settings(c)["loaded_hourly_cost"])
+        cost = {r["kind"]: round((r["m"] or 0) / 60 * rate, 2) for r in c.execute(
+            "select kind, avg(case when status='resolved' and resolved_by like 'clerk-%' then handling_minutes end) m from exceptions group by kind")}
+        out = {}
+        for r in c.execute("select v.exception_id, v.passed, v.ts, v.result, e.kind from verifications v join exceptions e on e.id=v.exception_id where v.actor=? order by v.ts", (x_actor,)):
+            w = out.setdefault(r["kind"], {"attempted": 0, "passed": 0, "current_unit_cost_usd": cost.get(r["kind"]), "cases": []})
+            w["attempted"] += 1; w["passed"] += r["passed"]
+            w["cases"].append({"exception_id": r["exception_id"], "passed": bool(r["passed"]), "failure_classes": json.loads(r["result"])["failure_classes"]})
+        for w in out.values():
+            w["pass_rate"] = round(w["passed"] / w["attempted"], 3); w["ci95"] = _wilson(w["pass_rate"], w["attempted"])
+        return {"actor": x_actor, "sandbox": x_sandbox, "workflows": out,
+                "note": "pass = the verifier found the system of record in the state the policy requires, with no writes outside the task. "
+                        "Pricing in production is 50% of current_unit_cost_usd per verified outcome; a workflow is offered once it clears 90% on held-out history."}
+
+
 @app.post("/sandbox/reset")
 def sandbox_reset(x_actor: str | None = Header(None), x_sandbox: str | None = Header(None)):
     if not API_KEYS:
@@ -122,6 +192,8 @@ def schema():
                   "/pos?vendor_id=&status=", "/vendors/{id}", "/vendors?name=", "/bank_transactions/{id}", "/settings"],
         "writes": ["POST /invoices/{id}/approve|hold|reject|dispute|link_po", "POST /bank_transactions/{id}/match|flag",
                    "POST /vendors/{id}/flag", "POST /exceptions/{id}/resolve|escalate"],
+        "meter": ["POST /exceptions/{id}/verify (after resolve/escalate; recorded once)", "GET /proof (your pass rate per workflow)",
+                  "GET /me", "POST /sandbox/reset"],
     }
 
 
@@ -352,11 +424,20 @@ def flag_vendor(vid: int, body: Reason, x_sandbox: str | None = Header(None), x_
     return _do(x_sandbox, x_actor, actions.flag_vendor, vid, body.reason)
 
 
+def _terminal(sandbox, actor, fn, xid, arg):
+    out = _do(sandbox, actor, fn, xid, arg)
+    if API_KEYS:  # hosted mode: the claim is metered immediately; the verdict is in the response
+        with db(sandbox) as c:
+            out["verdict"] = record_verdict(c, xid, actor)
+            c.commit()
+    return out
+
+
 @app.post("/exceptions/{xid}/resolve")
 def resolve(xid: int, body: Summary, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None)):
-    return _do(x_sandbox, x_actor, actions.resolve_exception, xid, body.summary)
+    return _terminal(x_sandbox, x_actor, actions.resolve_exception, xid, body.summary)
 
 
 @app.post("/exceptions/{xid}/escalate")
 def escalate(xid: int, body: Reason, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None)):
-    return _do(x_sandbox, x_actor, actions.escalate_exception, xid, body.reason)
+    return _terminal(x_sandbox, x_actor, actions.escalate_exception, xid, body.reason)
