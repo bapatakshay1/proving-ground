@@ -160,11 +160,11 @@ def main():
 
     # 8. live probe of the public testnet facilitator (network; informational)
     try:
-        with urllib.request.urlopen(f"{x402.PUBLIC_FACILITATOR}/supported", timeout=20) as r:
-            sup = json.load(r)
+        x402.FACILITATOR = x402.PUBLIC_FACILITATOR
+        sup = x402.facilitator("/supported", method="GET")
+        assert "_http" not in sup and "_error" not in sup, sup
         kinds = sup.get("kinds") or sup
         nets = sorted({k.get("network") for k in kinds if isinstance(k, dict)})[:6]
-        x402.FACILITATOR = x402.PUBLIC_FACILITATOR
         ok, info = x402.verify_and_settle(json.loads(base64.b64decode(payment(req, "0xdeadbeef"))), req)
         assert not ok, "a dummy signature must not verify"
         print(f"8. live x402.org facilitator: /supported ok ({len(kinds)} kinds, e.g. {nets}); dummy /verify rejected: {info['reason']!s:.60}")
