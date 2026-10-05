@@ -15,10 +15,10 @@ import shutil
 import sqlite3
 
 from fastapi import FastAPI, Header, HTTPException, Query, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 
-from . import actions, policy
+from . import actions, agents, diner, policy
 
 BASE_DB = pathlib.Path(os.environ.get("PG_DB", "out/twin.db"))
 SANDBOX_DIR = pathlib.Path(os.environ.get("PG_SANDBOXES", "out/sandboxes"))
@@ -42,36 +42,125 @@ def _load_keys():
 
 
 API_KEYS = _load_keys()
-OPEN_PATHS = {"/health", "/docs", "/openapi.json", "/schema", "/policy"}
+# hosted mode: bearer auth, private sandboxes, metering. Dev mode (the harness) has none of it.
+HOSTED = bool(API_KEYS) or os.environ.get("PG_HOSTED") == "1"
+ADMIN_KEY = os.environ.get("PG_ADMIN_KEY", "")
+OPEN_PATHS = {"/", "/health", "/docs", "/openapi.json", "/schema", "/policy", "/llms.txt", "/.well-known/agent-card.json", "/seat", "/stats/exceptions"}
+
+
+def _ensure_sandbox(actor):
+    SANDBOX_DIR.mkdir(parents=True, exist_ok=True)
+    if not (SANDBOX_DIR / f"{actor}.db").exists():
+        shutil.copy(BASE_DB, SANDBOX_DIR / f"{actor}.db")
 
 
 @app.middleware("http")
 async def auth(request: Request, call_next):
-    if not API_KEYS or request.url.path in OPEN_PATHS:
+    path = request.url.path
+    if not HOSTED or path in OPEN_PATHS or path.startswith("/seats/"):
         return await call_next(request)
     raw = request.headers.get("authorization", "")
-    actor = API_KEYS.get(raw[7:].strip()) if raw.lower().startswith("bearer ") else None
+    token = raw[7:].strip() if raw.lower().startswith("bearer ") else ""
+    actor, metered = API_KEYS.get(token), False
+    if not actor and token:
+        actor, metered = diner.lookup(token), True
     if not actor:
-        return JSONResponse({"detail": "missing or invalid bearer token"}, status_code=401)
-    sandbox = request.headers.get("x-sandbox")
+        return JSONResponse({"detail": "missing or invalid bearer token", "get_a_seat": "POST /seat", "menu": "GET /"}, status_code=401)
+    sandbox = actor if path == "/mcp" else request.headers.get("x-sandbox")
     if sandbox and sandbox != actor:
         return JSONResponse({"detail": f"your sandbox is '{actor}'; other sandboxes are not visible"}, status_code=403)
     if request.method != "GET" and sandbox != actor:
         return JSONResponse({"detail": f"writes go to your private sandbox: send X-Sandbox: {actor}"}, status_code=403)
     if sandbox == actor:
-        SANDBOX_DIR.mkdir(parents=True, exist_ok=True)
-        if not (SANDBOX_DIR / f"{actor}.db").exists():
-            shutil.copy(BASE_DB, SANDBOX_DIR / f"{actor}.db")
-    headers = [(k, v) for k, v in request.scope["headers"] if k != b"x-actor"]
-    headers.append((b"x-actor", actor.encode()))
+        _ensure_sandbox(actor)
+    headers = [(k, v) for k, v in request.scope["headers"] if k not in (b"x-actor", b"x-seat", b"x-sandbox")]
+    headers += [(b"x-actor", actor.encode()), (b"x-seat", b"1" if metered else b"0")]
+    if sandbox:
+        headers.append((b"x-sandbox", sandbox.encode()))
     request.scope["headers"] = headers
     return await call_next(request)
 
 
+def _base_url(request: Request):
+    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
+    return f"{proto}://{request.headers.get('x-forwarded-host', request.headers.get('host', 'localhost'))}"
+
+
+def _menu(request: Request):
+    with db(None) as c:
+        st = stats_for(c)
+    return diner.menu(_base_url(request), st)
+
+
+@app.get("/")
+def front_door(request: Request):
+    m = _menu(request)
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept and "application/json" not in accept.split(",")[0]:
+        return HTMLResponse(diner.html(m))
+    return m
+
+
+@app.get("/llms.txt")
+def llms(request: Request):
+    return PlainTextResponse(diner.llms_txt(_menu(request)), media_type="text/markdown")
+
+
+@app.get("/.well-known/agent-card.json")
+def agent_card(request: Request):
+    return diner.agent_card(_base_url(request))
+
+
+class SeatRequest(BaseModel):
+    name: str | None = None
+
+
+@app.post("/seat", status_code=201)
+def take_seat(request: Request, body: SeatRequest | None = None):
+    """Self-serve seating: a bearer token (shown once), a private sandbox, and free credits."""
+    if not HOSTED:
+        raise HTTPException(400, "seating is only available in hosted mode (set PG_API_KEYS or PG_HOSTED=1)")
+    ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "?"))
+    if not diner.rate_ok(ip):
+        raise HTTPException(429, "too many seats from this address; try again later")
+    try:
+        token, actor, credits = diner.create_seat((body.name if body else None), reserved=set(API_KEYS.values()))
+    except ValueError as e:
+        raise HTTPException(503, str(e))
+    _ensure_sandbox(actor)
+    return {"token": token, "actor": actor, "sandbox": actor, "credits": credits, "price_credits_per_claim": diner.PRICE_CREDITS,
+            "how": f"send 'Authorization: Bearer <token>' and 'X-Sandbox: {actor}' on every call, or point an MCP client at /mcp with the token. "
+                   "Reads are free; each resolve/escalate costs credits and returns a verdict. Keep the token: it is not shown again."}
+
+
 @app.get("/me")
-def me(x_actor: str | None = Header(None)):
-    return {"actor": x_actor, "auth_enabled": bool(API_KEYS), "sandbox": x_actor if API_KEYS else None,
-            "how": "send X-Sandbox: <your actor> on every call to work in your private copy; POST /sandbox/reset to start over" if API_KEYS else "dev mode: no auth"}
+def me(x_actor: str | None = Header(None), x_seat: str | None = Header(None)):
+    out = {"actor": x_actor, "auth_enabled": HOSTED, "sandbox": x_actor if HOSTED else None,
+           "how": "send X-Sandbox: <your actor> on every call to work in your private copy; POST /sandbox/reset to start over" if HOSTED else "dev mode: no auth"}
+    if x_seat == "1":
+        s = diner.seat(x_actor) or {}
+        out.update({"metered": True, "credits": s.get("credits"), "spent": s.get("spent"), "plan": s.get("plan"), "price_credits_per_claim": diner.PRICE_CREDITS})
+    elif HOSTED:
+        out["metered"] = False
+    return out
+
+
+class Credit(BaseModel):
+    credits: int
+    plan: str | None = None
+
+
+@app.post("/seats/{actor}/credit")
+def credit_seat(actor: str, body: Credit, authorization: str | None = Header(None)):
+    """Admin: what a payment webhook calls once money has moved. Bearer PG_ADMIN_KEY."""
+    if not ADMIN_KEY or (authorization or "")[7:].strip() != ADMIN_KEY or not (authorization or "").lower().startswith("bearer "):
+        raise HTTPException(403, "admin key required")
+    if body.credits <= 0:
+        raise HTTPException(400, "credits must be positive")
+    out = diner.credit(actor, body.credits, body.plan)
+    if not out:
+        raise HTTPException(404, "no such seat")
+    return out
 
 
 VERIF_DDL = "create table if not exists verifications(exception_id integer primary key, actor text, ts text, passed integer, result text, detail text)"
@@ -144,7 +233,7 @@ def proof(x_sandbox: str | None = Header(None), x_actor: str | None = Header(Non
 
 @app.post("/sandbox/reset")
 def sandbox_reset(x_actor: str | None = Header(None), x_sandbox: str | None = Header(None)):
-    if not API_KEYS:
+    if not HOSTED:
         raise HTTPException(400, "sandbox reset is only available when auth is enabled")
     shutil.copy(BASE_DB, SANDBOX_DIR / f"{x_actor}.db")
     return {"ok": True, "sandbox": x_actor, "reset_from": "base twin"}
@@ -208,18 +297,22 @@ def get_settings(x_sandbox: str | None = Header(None)):
         return policy.settings(c)
 
 
+def stats_for(c):
+    rate = float(policy.settings(c)["loaded_hourly_cost"])
+    out = []
+    for r in c.execute("select kind, count(*) n, sum(status='open') open, sum(status='resolved') resolved, "
+                       "avg(case when status='resolved' then handling_minutes end) mins from exceptions group by kind order by n desc"):
+        months = {m["m"]: m["n"] for m in c.execute("select substr(opened_at,1,7) m, count(*) n from exceptions where kind=? group by m", (r["kind"],))}
+        mins = r["mins"] or 0
+        out.append({"kind": r["kind"], "entity_type": policy.ENTITY[r["kind"]], "total": r["n"], "open": r["open"], "resolved": r["resolved"],
+                    "by_month": months, "avg_handling_minutes": round(mins, 1), "current_unit_cost_usd": round(mins / 60 * rate, 2)})
+    return {"loaded_hourly_cost": rate, "as_of": policy.settings(c).get("as_of"), "kinds": out}
+
+
 @app.get("/stats/exceptions")
 def stats(x_sandbox: str | None = Header(None)):
     with db(x_sandbox) as c:
-        rate = float(policy.settings(c)["loaded_hourly_cost"])
-        out = []
-        for r in c.execute("select kind, count(*) n, sum(status='open') open, sum(status='resolved') resolved, "
-                           "avg(case when status='resolved' then handling_minutes end) mins from exceptions group by kind order by n desc"):
-            months = {m["m"]: m["n"] for m in c.execute("select substr(opened_at,1,7) m, count(*) n from exceptions where kind=? group by m", (r["kind"],))}
-            mins = r["mins"] or 0
-            out.append({"kind": r["kind"], "entity_type": policy.ENTITY[r["kind"]], "total": r["n"], "open": r["open"], "resolved": r["resolved"],
-                        "by_month": months, "avg_handling_minutes": round(mins, 1), "current_unit_cost_usd": round(mins / 60 * rate, 2)})
-        return {"loaded_hourly_cost": rate, "as_of": policy.settings(c).get("as_of"), "kinds": out}
+        return stats_for(c)
 
 
 @app.get("/exceptions")
@@ -424,20 +517,127 @@ def flag_vendor(vid: int, body: Reason, x_sandbox: str | None = Header(None), x_
     return _do(x_sandbox, x_actor, actions.flag_vendor, vid, body.reason)
 
 
-def _terminal(sandbox, actor, fn, xid, arg):
+class PaymentRequired(Exception):
+    def __init__(self, body):
+        self.body = body
+
+
+def claim(sandbox, actor, metered, fn, xid, arg):
+    """A claim (resolve/escalate). Hosted mode: the verifier runs at once and the verdict rides in the response;
+    seat actors pay the price in credits, checked before the state changes so an unpaid claim changes nothing."""
+    if metered and not diner.can_pay(actor):
+        raise PaymentRequired(diner.payment_required(actor))
     out = _do(sandbox, actor, fn, xid, arg)
-    if API_KEYS:  # hosted mode: the claim is metered immediately; the verdict is in the response
+    if HOSTED:
         with db(sandbox) as c:
             out["verdict"] = record_verdict(c, xid, actor)
             c.commit()
+        if metered:
+            bal = diner.charge(actor, xid, out["verdict"].get("passed"))
+            out["bill"] = {"charged_credits": diner.PRICE_CREDITS, "credits_left": bal["credits"], "spent": bal["spent"]}
     return out
 
 
+def _claim_route(x_sandbox, x_actor, x_seat, fn, xid, arg):
+    try:
+        return claim(x_sandbox, x_actor, x_seat == "1", fn, xid, arg)
+    except PaymentRequired as e:
+        return JSONResponse(e.body, status_code=402, headers={"Payment-Required": "true"})
+
+
 @app.post("/exceptions/{xid}/resolve")
-def resolve(xid: int, body: Summary, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None)):
-    return _terminal(x_sandbox, x_actor, actions.resolve_exception, xid, body.summary)
+def resolve(xid: int, body: Summary, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None), x_seat: str | None = Header(None)):
+    return _claim_route(x_sandbox, x_actor, x_seat, actions.resolve_exception, xid, body.summary)
 
 
 @app.post("/exceptions/{xid}/escalate")
-def escalate(xid: int, body: Reason, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None)):
-    return _terminal(x_sandbox, x_actor, actions.escalate_exception, xid, body.reason)
+def escalate(xid: int, body: Reason, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None), x_seat: str | None = Header(None)):
+    return _claim_route(x_sandbox, x_actor, x_seat, actions.escalate_exception, xid, body.reason)
+
+
+# ---------------- MCP: the same tools, in-process ----------------
+
+MCP_TOOLS = diner.mcp_tools(agents.READ_TOOLS + agents.WRITE_TOOLS) + [
+    {"name": "get_seat", "description": "Who you are, your sandbox, credits left and price per claim.", "inputSchema": {"type": "object", "properties": {}}},
+    {"name": "proof", "description": "Your proof packet: pass rate per workflow on the cases you claimed, with 95% CI and the human unit cost.", "inputSchema": {"type": "object", "properties": {}}},
+]
+
+
+def mcp_call(name, a, sandbox, actor, metered):
+    a = {k: v for k, v in (a or {}).items() if v not in ("", None)}
+    W = lambda fn, *args: _do(sandbox, actor, fn, *args)  # noqa: E731
+    if name == "calculate":
+        return agents.calculate(str(a.get("expression", "")))
+    if name == "get_policy":
+        return get_policy()
+    if name == "get_exception":
+        return get_exception(int(a["exception_id"]), sandbox)
+    if name == "get_invoice":
+        return get_invoice(int(a["invoice_id"]), sandbox)
+    if name == "search_invoices":
+        return search_invoices(a.get("vendor_id"), a.get("invoice_number"), a.get("status"), a.get("po_number"), a.get("min_total"), a.get("max_total"),
+                               a.get("date_from"), a.get("date_to"), min(int(a.get("limit") or 50), 200), sandbox)
+    if name == "get_po":
+        return get_po(a["po_number"], sandbox)
+    if name == "search_pos":
+        return search_pos(int(a["vendor_id"]), a.get("status"), a.get("sku"), min(int(a.get("limit") or 50), 200), sandbox)
+    if name == "get_vendor":
+        return get_vendor(int(a["vendor_id"]), sandbox)
+    if name == "search_vendors":
+        return search_vendors(a["name"], sandbox)
+    if name == "get_bank_transaction":
+        return get_txn(int(a["bank_transaction_id"]), sandbox)
+    if name == "list_resolved_examples":
+        return list_exceptions(a["kind"], "resolved", min(int(a.get("limit") or 5), 10), sandbox)
+    if name == "approve_invoice":
+        return W(actions.approve_invoice, int(a["invoice_id"]), a.get("approved_amount"), a.get("note"))
+    if name == "hold_invoice":
+        return W(actions.hold_invoice, int(a["invoice_id"]), a["reason"], a.get("note"))
+    if name == "reject_invoice":
+        return W(actions.reject_invoice, int(a["invoice_id"]), a["reason"], a.get("note"))
+    if name == "dispute_invoice":
+        return W(actions.dispute_invoice, int(a["invoice_id"]), a["reason"], a.get("note"))
+    if name == "link_po":
+        return W(actions.link_po, int(a["invoice_id"]), a["po_number"])
+    if name == "match_bank_transaction":
+        return W(actions.match_bank_transaction, int(a["bank_transaction_id"]), a["invoice_ids"])
+    if name == "flag_bank_transaction":
+        return W(actions.flag_bank_transaction, int(a["bank_transaction_id"]), a["reason"])
+    if name == "flag_vendor":
+        return W(actions.flag_vendor, int(a["vendor_id"]), a["reason"])
+    if name == "resolve_exception":
+        return claim(sandbox, actor, metered, actions.resolve_exception, int(a["exception_id"]), a.get("summary", ""))
+    if name == "escalate_exception":
+        return claim(sandbox, actor, metered, actions.escalate_exception, int(a["exception_id"]), a.get("reason", ""))
+    if name == "get_seat":
+        return me(actor, "1" if metered else "0")
+    if name == "proof":
+        return proof(sandbox, actor)
+    return {"error": f"unknown tool {name}"}
+
+
+@app.post("/mcp")
+async def mcp(request: Request, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None), x_seat: str | None = Header(None)):
+    try:
+        body = await request.json()
+    except Exception:  # noqa: BLE001
+        return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}}, status_code=400)
+    actor = x_actor or "anonymous"
+
+    def call(name, args):
+        try:
+            return mcp_call(name, args, x_sandbox, actor, x_seat == "1")
+        except PaymentRequired as e:
+            return {"error": "payment required", **e.body}
+        except HTTPException as e:
+            return {"error": e.detail}
+
+    status, payload = diner.jsonrpc(body, MCP_TOOLS, call)
+    if payload is None:
+        return JSONResponse(None, status_code=status)
+    return JSONResponse(payload, status_code=status)
+
+
+@app.get("/mcp")
+def mcp_get():
+    raise HTTPException(405, "POST JSON-RPC to /mcp (streamable HTTP, JSON responses); SSE is not offered")

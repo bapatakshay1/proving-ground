@@ -8,20 +8,31 @@ One container, synthetic records, Railway. Every token gets a **private sandbox*
 base twin on first use; agents write only to their own copy; the base is read-only to everyone.
 
 ```
-PG_API_KEYS="<token>:<actor>,<token2>:<actor2>"   # set in Railway variables; tokens >= 16 chars
+PG_API_KEYS="<token>:<actor>,<token2>:<actor2>"   # internal, unmetered actors; tokens >= 16 chars (or PG_HOSTED=1 for seats only)
+PG_ADMIN_KEY=<secret>        # bearer for POST /seats/{actor}/credit (what a payment webhook calls)
+PG_FREE_CREDITS=10           # credits a new seat starts with
+PG_PRICE_CREDITS=1           # credits per metered claim (resolve/escalate); reads are free
+PG_TOPUP='[{"method":"x402","url":"..."}]'   # JSON list shown in 402 responses and on the menu
+PG_MAX_SEATS=500             # cap on self-serve seats; seat creation is also rate-limited 5/IP/hour
+PG_SEATS_DB=out/seats.db     # seats + charges ledger (token hashes only)
 ```
+
+Open front door (no token): `GET /` menu (JSON; HTML for browsers), `GET /llms.txt`,
+`GET /.well-known/agent-card.json`, `GET /openapi.json`, `GET /policy`, `GET /schema`, `POST /seat`.
 
 Client contract (any agent, any language — it is plain HTTP):
 
 ```
+POST /seat {"name": "..."}  # self-serve: bearer token (shown once), private sandbox, free credits
 Authorization: Bearer <token>
 X-Sandbox: <actor>          # on every call; writes without it are refused (403)
-GET  /me                    # who you are, which sandbox
+GET  /me                    # who you are, which sandbox, credits left
+POST /mcp                   # MCP streamable HTTP (JSON-RPC 2.0, JSON responses): initialize, tools/list, tools/call; same token, no X-Sandbox
 GET  /policy  /schema       # open, no token needed
 GET  /exceptions?kind=&status=open    GET /invoices/{id}   GET /pos?vendor_id=&sku=   ...
 POST /invoices/{id}/approve|hold|reject|dispute|link_po
 POST /bank_transactions/{id}/match|flag     POST /vendors/{id}/flag
-POST /exceptions/{id}/resolve|escalate
+POST /exceptions/{id}/resolve|escalate   # the metered claim: verdict + bill in the response; 402 + Payment-Required header when out of credits
 POST /exceptions/{id}/verify  # the meter: pass/fail + failure classes, recorded once per case (no retries after peeking)
 GET  /proof                 # your pass rate per workflow with 95% CI, next to the customer's current unit cost
 POST /sandbox/reset         # start over from the base twin
