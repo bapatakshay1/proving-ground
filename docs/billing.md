@@ -97,3 +97,15 @@ Crypto" method, US seller (not NY), preview APIs. Stripe also accepts x402 on Ba
 facilitator. Card-network agent rails (Visa TAP, Mastercard Agent Pay, AP2) are not seller rails for
 API micro-calls yet. The meter here is rail-agnostic: a Stripe webhook would call
 `POST /seats/{actor}/credit` with the admin key.
+
+## Tax export
+
+`python -m src.cli ledger-export --period YYYY-MM` writes two CSVs under `out/`: `ledger_<period>_receipts.csv`
+(one row per settled payment: received-at UTC, payer, amount USDC, USD fair value at $1.00, transaction id,
+network, rail, seat, credits granted, payment key, plus a TOTAL line) and `ledger_<period>_usage.csv` (credits
+consumed per seat). For Schedule C: USDC received for the Service is ordinary income at $1.00 fair market value
+on receipt; conversion to USD later is a separate (near-zero-gain) disposition. Set `PG_SEATS_DB` to the live
+seats database (on Railway: the volume at `/app/out/seats.db`).
+
+Charge-on-error rule (also in `/terms` and `/pricing`): a verifier error or timeout is not charged; a submitted
+resolution that fails the verifier is charged — the verdict is the product; reads are free.

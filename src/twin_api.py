@@ -46,7 +46,10 @@ API_KEYS = _load_keys()
 HOSTED = bool(API_KEYS) or os.environ.get("PG_HOSTED") == "1"
 ADMIN_KEY = os.environ.get("PG_ADMIN_KEY", "")
 OPEN_PATHS = {"/", "/health", "/docs", "/openapi.json", "/schema", "/policy", "/llms.txt", "/.well-known/agent-card.json", "/seat", "/stats/exceptions",
-              "/pricing", "/.well-known/mcp/server-card.json", "/.well-known/mcp-server-card"}
+              "/pricing", "/.well-known/mcp/server-card.json", "/.well-known/mcp-server-card", "/terms", "/privacy"}
+LEGAL_DIR = pathlib.Path(__file__).resolve().parent.parent / "docs" / "legal"
+LEGAL_STATE = os.environ.get("PG_LEGAL_STATE", "Georgia")
+CONTACT = os.environ.get("PG_CONTACT_EMAIL", "bapat.akshay1@gmail.com")
 
 
 def _ensure_sandbox(actor):
@@ -62,9 +65,16 @@ async def auth(request: Request, call_next):
         return await call_next(request)
     raw = request.headers.get("authorization", "")
     token = raw[7:].strip() if raw.lower().startswith("bearer ") else ""
+    if path == "/mcp" and not token:
+        token = request.headers.get("mcp-session-id", "").strip()  # an MCP session id IS a seat token
     actor, metered = API_KEYS.get(token), False
     if not actor and token:
         actor, metered = diner.lookup(token), True
+    if not actor and path == "/mcp" and not token:
+        # no credential at all: let the MCP route seat the session on `initialize` (directory-compatible no-auth mode)
+        headers = [(k, v) for k, v in request.scope["headers"] if k not in (b"x-actor", b"x-seat", b"x-sandbox")]
+        request.scope["headers"] = headers + [(b"x-anon", b"1")]
+        return await call_next(request)
     if not actor:
         return JSONResponse({"detail": "missing or invalid bearer token", "get_a_seat": "POST /seat", "menu": "GET /"}, status_code=401)
     sandbox = actor if path == "/mcp" else request.headers.get("x-sandbox")
@@ -128,7 +138,8 @@ def server_card(base_url):
             "description": "Sealed accounts-payable twin: work real exceptions, get a code-verified pass/fail per case and a proof packet.",
             "transport": {"type": "streamable-http", "url": f"{base_url}/mcp"},
             "authentication": {"type": "bearer", "obtain": f"POST {base_url}/seat (no account; returns a token, a private sandbox and free credits)"},
-            "capabilities": {"tools": {}}, "pricing": f"{base_url}/pricing", "homepage": base_url, "openapi": f"{base_url}/openapi.json"}
+            "capabilities": {"tools": {}}, "pricing": f"{base_url}/pricing", "homepage": base_url, "openapi": f"{base_url}/openapi.json",
+            "termsOfService": f"{base_url}/terms", "privacyPolicy": f"{base_url}/privacy"}
 
 
 @app.get("/.well-known/mcp/server-card.json")
@@ -137,11 +148,30 @@ def mcp_server_card(request: Request):
     return server_card(_base_url(request))
 
 
+def _legal(request: Request, name, title):
+    text = (LEGAL_DIR / f"{name}.md").read_text().replace("{{LEGAL_STATE}}", LEGAL_STATE).replace("{{CONTACT_EMAIL}}", CONTACT)
+    accept = request.headers.get("accept", "")
+    if "text/html" in accept:
+        return HTMLResponse(diner.md_html(text, title))
+    return PlainTextResponse(text, media_type="text/markdown")
+
+
+@app.get("/terms")
+def terms(request: Request):
+    return _legal(request, "terms", "Terms of Service — Proving Ground")
+
+
+@app.get("/privacy")
+def privacy(request: Request):
+    return _legal(request, "privacy", "Privacy Notice — Proving Ground")
+
+
 @app.get("/pricing")
 def pricing(request: Request):
     base = _base_url(request)
     out = {"unit": "credit", "reads": "free", "price_credits_per_claim": diner.PRICE_CREDITS, "free_credits_per_seat": diner.FREE_CREDITS,
-           "credit_usd": x402.CREDIT_USD if x402.enabled() else None, "top_up": _topup_methods(base)}
+           "credit_usd": x402.CREDIT_USD if x402.enabled() else None, "top_up": _topup_methods(base), "terms": f"{base}/terms",
+           "charge_on_error": "a verifier error/timeout is not charged; a submitted resolution that fails the verifier is charged (the verdict is the product); reads are free"}
     if x402.enabled():
         out["x402"] = {"network": x402.NETWORK, "asset": x402.ASSETS[x402.NETWORK][0], "payTo": x402.PAY_TO, "scheme": "exact",
                        "facilitator": x402.FACILITATOR, "example_402": x402.payment_required(diner.PRICE_CREDITS, f"{base}/exceptions/{{id}}/resolve", "metered claim")}
@@ -568,10 +598,11 @@ class PaymentRequired(Exception):
 
 def _required(actor, resource, error=None):
     """The 402: the diner's JSON body plus, when x402 is configured, the spec'd PAYMENT-REQUIRED header (base64 JSON)."""
-    body = diner.payment_required(actor)
+    base = resource.rsplit("/exceptions", 1)[0] if "/exceptions" in resource else resource.rsplit("/seats", 1)[0]
+    body = diner.payment_required(actor, terms_url=f"{base}/terms")
     if error:
         body["detail"] = f"payment rejected: {error}"
-    body["top_up"]["methods"] = _topup_methods(resource.rsplit("/exceptions", 1)[0] if "/exceptions" in resource else resource.rsplit("/seats", 1)[0])
+    body["top_up"]["methods"] = _topup_methods(base)
     # HTTP header names are case-insensitive: the spec'd PAYMENT-REQUIRED (base64 PaymentRequired) replaces the
     # plain "Payment-Required: true" flag rather than sitting next to it, or clients see two values for one name.
     if x402.enabled():
@@ -672,10 +703,13 @@ def topup_x402(request: Request, actor: str, x_actor: str | None = Header(None),
 
 # ---------------- MCP: the same tools, in-process ----------------
 
-MCP_TOOLS = diner.mcp_tools(agents.READ_TOOLS + agents.WRITE_TOOLS) + [
+MCP_TOOLS = diner.mcp_tools(agents.READ_TOOLS + agents.WRITE_TOOLS, extra=[
+    {"name": "list_open_exceptions", "description": "Open exceptions in your sandbox, optionally filtered by kind (price_mismatch, quantity_mismatch, "
+     "possible_duplicate, missing_po, unmatched_payment, vendor_bank_change). Start here.",
+     "inputSchema": {"type": "object", "properties": {"kind": {"type": "string"}, "limit": {"type": "integer"}}}},
     {"name": "get_seat", "description": "Who you are, your sandbox, credits left and price per claim.", "inputSchema": {"type": "object", "properties": {}}},
     {"name": "proof", "description": "Your proof packet: pass rate per workflow on the cases you claimed, with 95% CI and the human unit cost.", "inputSchema": {"type": "object", "properties": {}}},
-]
+])
 
 
 def mcp_call(name, a, sandbox, actor, metered):
@@ -685,6 +719,8 @@ def mcp_call(name, a, sandbox, actor, metered):
         return agents.calculate(str(a.get("expression", "")))
     if name == "get_policy":
         return get_policy()
+    if name == "list_open_exceptions":
+        return list_exceptions(a.get("kind"), "open", min(int(a.get("limit") or 20), 200), sandbox)
     if name == "get_exception":
         return get_exception(int(a["exception_id"]), sandbox)
     if name == "get_invoice":
@@ -732,11 +768,31 @@ def mcp_call(name, a, sandbox, actor, metered):
 
 
 @app.post("/mcp")
-async def mcp(request: Request, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None), x_seat: str | None = Header(None)):
+async def mcp(request: Request, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None), x_seat: str | None = Header(None),
+              x_anon: str | None = Header(None)):
     try:
         body = await request.json()
     except Exception:  # noqa: BLE001
         return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": -32700, "message": "parse error"}}, status_code=400)
+    extra_headers = {}
+    if HOSTED and x_anon == "1":
+        # No credential: only `initialize` is allowed, and it seats the session. The session id returned in
+        # Mcp-Session-Id is a seat token with the free allowance; it can be topped up exactly like a token.
+        msgs = body if isinstance(body, list) else [body]
+        if not any(m.get("method") == "initialize" for m in msgs if isinstance(m, dict)):
+            return JSONResponse({"jsonrpc": "2.0", "id": (body.get("id") if isinstance(body, dict) else None),
+                                 "error": {"code": -32001, "message": "no session: send `initialize` first (it seats you and returns Mcp-Session-Id), "
+                                                                       "or send Authorization: Bearer <seat token>"}}, status_code=401)
+        ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (request.client.host if request.client else "?"))
+        if not diner.rate_ok(ip):
+            return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": -32002, "message": "too many new sessions from this address; try later"}}, status_code=429)
+        try:
+            token, seated, _ = diner.create_seat(f"mcp-{os.urandom(4).hex()}", reserved=set(API_KEYS.values()))
+        except ValueError as e:
+            return JSONResponse({"jsonrpc": "2.0", "id": None, "error": {"code": -32003, "message": str(e)}}, status_code=503)
+        _ensure_sandbox(seated)
+        x_actor, x_sandbox, x_seat = seated, seated, "1"
+        extra_headers["Mcp-Session-Id"] = token
     actor = x_actor or "anonymous"
 
     def call(name, args):
@@ -749,10 +805,59 @@ async def mcp(request: Request, x_sandbox: str | None = Header(None), x_actor: s
 
     status, payload = diner.jsonrpc(body, MCP_TOOLS, call)
     if payload is None:
-        return JSONResponse(None, status_code=status)
-    return JSONResponse(payload, status_code=status)
+        return JSONResponse(None, status_code=status, headers=extra_headers)
+    return JSONResponse(payload, status_code=status, headers=extra_headers)
 
 
 @app.get("/mcp")
 def mcp_get():
     raise HTTPException(405, "POST JSON-RPC to /mcp (streamable HTTP, JSON responses); SSE is not offered")
+
+
+# ---------------- OpenAPI: terms + payment discovery ----------------
+# x-payment-info per metered operation in the shape x402scan indexes (price{mode,currency,amount USD}, protocols[{x402:{}}],
+# free endpoints security: [] — nirholas/cryptocurrency.cv docs/x402scan-discovery.md) plus the MPP payment-discovery draft's
+# offers[] (tempoxyz/mpp-specs specs/extensions/draft-payment-discovery-01.md: intent, method, amount, currency, description).
+METERED_OPS = {("/exceptions/{xid}/resolve", "post"), ("/exceptions/{xid}/escalate", "post"), ("/seats/{actor}/topup/x402", "post")}
+_openapi_cache = {}
+
+
+def custom_openapi():
+    if _openapi_cache:
+        return _openapi_cache["schema"]
+    from fastapi.openapi.utils import get_openapi
+    schema = get_openapi(title="Proving Ground", version="0.4", description=diner.TAGLINE, routes=app.routes)
+    base = os.environ.get("PG_PUBLIC_URL", "https://proving-ground-production.up.railway.app")
+    schema["info"]["termsOfService"] = f"{base}/terms"
+    schema["info"]["contact"] = {"email": CONTACT}
+    schema.setdefault("components", {}).setdefault("securitySchemes", {})["seat"] = {"type": "http", "scheme": "bearer", "description": "seat token from POST /seat (or MCP session id)"}
+    price_usd = diner.PRICE_CREDITS * x402.CREDIT_USD
+    pay = {"price": {"mode": "fixed", "currency": "USD", "amount": f"{price_usd:.6f}"}, "protocols": [{"x402": {}}],
+           "offers": [{"intent": "charge", "method": "x402", "amount": x402.usd_to_atomic(price_usd), "currency": x402.ASSETS.get(x402.NETWORK, ("",))[0],
+                       "description": "one metered claim (resolve/escalate) with a verifier verdict"}],
+           "terms": f"{base}/terms", "network": x402.NETWORK, "payTo": x402.PAY_TO or None, "charge_on_error": "verifier error/timeout not charged; failed verdicts charged; reads free"}
+    schema["x-payment-info"] = {**pay, "pricing": f"{base}/pricing", "seat": f"POST {base}/seat", "mcp": f"{base}/mcp"}
+    for path, ops in schema.get("paths", {}).items():
+        for method, op in ops.items():
+            if not isinstance(op, dict):
+                continue
+            if (path, method) in METERED_OPS:
+                op["x-payment-info"] = dict(pay)
+                op["security"] = [{"seat": []}]
+                op.setdefault("responses", {})["402"] = {"description": "Payment Required: out of credits; body lists top-up methods and carries the x402 PaymentRequired (also in the PAYMENT-REQUIRED header)",
+                                                         "content": {"application/json": {"schema": {"type": "object"}}}}
+                ok = op["responses"].get("200", {})
+                ok.setdefault("content", {}).setdefault("application/json", {})["schema"] = {"type": "object", "properties": {
+                    "ok": {"type": "boolean"}, "exception_id": {"type": "integer"}, "status": {"type": "string"},
+                    "verdict": {"type": "object", "properties": {"passed": {"type": "boolean"}, "failure_classes": {"type": "array", "items": {"type": "string"}}}},
+                    "bill": {"type": "object", "properties": {"charged_credits": {"type": "integer"}, "credits_left": {"type": "integer"}}}}}
+                op["responses"]["200"] = ok
+            elif path in OPEN_PATHS:
+                op["security"] = []
+            else:
+                op["security"] = [{"seat": []}]
+    _openapi_cache["schema"] = schema
+    return schema
+
+
+app.openapi = custom_openapi

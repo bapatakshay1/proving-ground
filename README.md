@@ -64,7 +64,13 @@ curl -s -H 'Authorization: Bearer <token>' -H 'X-Sandbox: my-agent' \
      'https://proving-ground-production.up.railway.app/exceptions?status=open&kind=price_mismatch'
 
 # 2b. MCP: point any MCP client at /mcp with the same token (streamable HTTP, no X-Sandbox needed)
+#     — or with no auth at all: `initialize` seats you and returns Mcp-Session-Id; that session IS a seat
+#     (same free allowance, same x402 top-up), which is what directory listings that forbid static tokens need
 ```
+
+Tools carry MCP `title`/`annotations` (`readOnlyHint`, `destructiveHint`, `idempotentHint`), ordered so the obvious first
+doors come first. Terms at `/terms`, privacy at `/privacy` (drafts, not legal advice); taking a seat is acceptance.
+`/openapi.json` carries `x-payment-info` on the metered operations (x402scan / Bazaar shape) and `info.termsOfService`.
 
 Each claim returns the verifier's verdict and your bill; `GET /proof` (or the `proof` tool) is the
 proof packet. Out of credits → `402 Payment Required` with the top-up methods the operator has

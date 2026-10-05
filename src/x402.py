@@ -58,9 +58,25 @@ def requirements(price_credits, resource_url, description):
             }
 
 
-def payment_required(price_credits, resource_url, description, error=None):
+# Bazaar / x402scan discovery shapes (docs.x402.org/extensions/bazaar.md: PaymentRequired.extensions.bazaar.info with
+# input{type,...}/output; x402scan docs (nirholas/cryptocurrency.cv docs/x402scan-discovery.md): accepts[].outputSchema
+# {input, output} and extensions.bazaar.schema). Both are emitted so either indexer can catalogue the resource.
+BAZAAR_INFO = {
+    "input": {"type": "http", "method": "POST", "bodyType": "json", "discoverable": True,
+              "bodyFields": {"summary": {"type": "string", "description": "one-line summary of the resolution (resolve) or reason (escalate)"}},
+              "headerFields": {"Authorization": "Bearer <seat token from POST /seat>", "X-Sandbox": "<your actor>"}},
+    "output": {"type": "json", "example": {"ok": True, "exception_id": 123, "status": "resolved",
+                                           "verdict": {"passed": True, "failure_classes": []},
+                                           "bill": {"charged_credits": 1, "credits_left": 9}}},
+}
+
+
+def payment_required(price_credits, resource_url, description, error=None, bazaar=None):
+    info = bazaar or BAZAAR_INFO
+    req = {**requirements(price_credits, resource_url, description), "outputSchema": {"input": info["input"], "output": info["output"]}}
     body = {"x402Version": 2, "resource": {"url": resource_url, "description": description, "mimeType": "application/json"},
-            "accepts": [requirements(price_credits, resource_url, description)]}
+            "accepts": [req], "extensions": {"bazaar": {"info": info, "schema": {"properties": {"input": {"properties": {"bodyFields": info["input"].get("bodyFields", {})}},
+                                                                                                 "output": {"properties": {"example": info["output"]["example"]}}}}}}}
     if error:
         body["error"] = error
     return body

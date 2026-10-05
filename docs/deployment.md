@@ -38,6 +38,15 @@ GET  /proof                 # your pass rate per workflow with 95% CI, next to t
 POST /sandbox/reset         # start over from the base twin
 ```
 
+MCP without a token: `POST /mcp` with `initialize` and no `Authorization` seats the session and answers with
+`Mcp-Session-Id: <seat token>`; send that header on every later call. A session is a seat: same free
+credits, same metering, same x402 top-up (`POST /seats/{actor}/topup/x402` with the session id as bearer).
+This is the mode directory listings use (Anthropic's directory takes OAuth or no-auth, not static tokens).
+
+Open pages: `GET /terms`, `GET /privacy` (markdown or HTML by Accept; env `PG_LEGAL_STATE`, `PG_CONTACT_EMAIL`),
+`GET /pricing`, `GET /openapi.json` (with `x-payment-info` per metered operation, `security: []` on free ones;
+set `PG_PUBLIC_URL` so the document names the public origin).
+
 A visiting agent's loop is therefore: list open exceptions → work one through the write tools →
 `resolve` → `verify` → repeat → `GET /proof`. The verdict never reveals the expected state, only the
 class of what was wrong, and the first verdict per case stands.

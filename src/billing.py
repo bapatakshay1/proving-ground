@@ -79,3 +79,29 @@ def render(o):
           f"Model API spend this period ${r['model_spend_usd']} (every attempt, billed or not); cost to serve incl. overhead and operations allowance ${r['cost_to_serve_usd']}; "
           f"realised gross margin {r['gross_margin']:.0%}." if r["gross_margin"] is not None else "No billable activity this period.", ""]
     return "\n".join(L)
+
+
+def ledger_export(period, out_dir="out"):
+    """Tax/accounting export from the seats database: one CSV of USDC receipts (ordinary income at $1.00 FMV on receipt,
+    Schedule C) and one of credits consumed per seat for the period (YYYY-MM)."""
+    import csv
+    from . import diner
+    pathlib.Path(out_dir).mkdir(exist_ok=True)
+    with diner._conn() as c:
+        pays = [dict(r) for r in c.execute("select * from payments where substr(ts,1,7)=? order by ts", (period,))]
+        use = [dict(r) for r in c.execute("select actor, count(*) claims, sum(credits) credits, sum(passed) passed from charges where substr(ts,1,7)=? group by actor order by actor", (period,))]
+    p1 = pathlib.Path(out_dir, f"ledger_{period}_receipts.csv")
+    with open(p1, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["received_at_utc", "payer", "amount_usdc", "usd_fair_value", "transaction_id", "network", "rail", "seat_actor", "credits_granted", "payment_key"])
+        for r in pays:
+            w.writerow([r["ts"], r["payer"], f"{r['amount_usd']:.6f}", f"{r['amount_usd']:.2f}", r["transaction_id"], r["network"], r["rail"], r["actor"], r["credits"], r["payment_key"]])
+        w.writerow(["TOTAL", "", f"{sum(r['amount_usd'] for r in pays):.6f}", f"{sum(r['amount_usd'] for r in pays):.2f}", "", "", "", "", sum(r["credits"] for r in pays), f"{len(pays)} receipts"])
+    p2 = pathlib.Path(out_dir, f"ledger_{period}_usage.csv")
+    with open(p2, "w", newline="") as f:
+        w = csv.writer(f)
+        w.writerow(["seat_actor", "claims", "credits_consumed", "verdicts_passed"])
+        for r in use:
+            w.writerow([r["actor"], r["claims"], r["credits"], r["passed"]])
+        w.writerow(["TOTAL", sum(r["claims"] for r in use), sum(r["credits"] or 0 for r in use), sum(r["passed"] or 0 for r in use)])
+    return {"receipts_csv": str(p1), "usage_csv": str(p2), "receipts": len(pays), "usd_received": round(sum(r["amount_usd"] for r in pays), 6), "seats_active": len(use)}

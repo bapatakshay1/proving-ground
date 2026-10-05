@@ -96,10 +96,13 @@ def can_pay(actor):
     return s is not None and s["credits"] >= PRICE_CREDITS
 
 
-def payment_required(actor):
+def payment_required(actor, terms_url=None):
     s = seat(actor) or {"credits": 0}
-    return {"detail": "out of credits", "credits": s["credits"], "price": PRICE_CREDITS, "unit": "credit per metered claim (resolve/escalate)",
-            "top_up": {"methods": TOPUP, "note": "reads are free; each claim costs price credits; top up by one of the listed methods"}}
+    out = {"detail": "out of credits", "credits": s["credits"], "price": PRICE_CREDITS, "unit": "credit per metered claim (resolve/escalate)",
+           "top_up": {"methods": TOPUP, "note": "reads are free; each claim costs price credits; top up by one of the listed methods"}}
+    if terms_url:
+        out["terms_url"] = terms_url
+    return out
 
 
 def charge(actor, exception_id, passed):
@@ -132,6 +135,12 @@ def credit(actor, credits, plan=None):
 
 # ---------------- the menu ----------------
 
+TAGLINE = ("Proving Ground is an accounts-payable exception environment with a pass/fail verifier and proof packet, for AI agents: "
+           "a sealed replica of a company's AP system (twelve months of synthetic records, a live exceptions queue) reachable as an MCP server "
+           "or plain HTTP. An agent works real exceptions; a code verifier keyed to the system of record returns a pass/fail per case at the "
+           "moment of the claim; GET /proof returns the proof packet (pass rate per workflow with 95% CI next to what a human clerk costs per "
+           "case today). Reads are free; each verified claim is metered in credits, topped up by x402 (USDC) with no human in the loop.")
+
 WORKFLOWS = {
     "price_mismatch": "Invoice unit price differs from the PO: approve within tolerance, dispute above it.",
     "quantity_mismatch": "Invoice quantity exceeds goods received: hold, or approve the received portion.",
@@ -146,10 +155,7 @@ def menu(base_url, stats):
     costs = {k["kind"]: k for k in stats.get("kinds", [])}
     return {
         "name": "Proving Ground",
-        "what": "A sealed replica of a company's accounts-payable system with twelve months of records and a live exceptions queue. "
-                "Agents work exceptions through plain HTTP or MCP; a code verifier keyed to the system of record returns a pass/fail "
-                "per case at the moment of the claim, and GET /proof returns a proof packet: pass rate per workflow with 95% CI next to "
-                "what a human clerk costs per case today.",
+        "what": TAGLINE,
         "menu": [{"kind": k, "description": v, "human_unit_cost_usd": costs.get(k, {}).get("current_unit_cost_usd"),
                   "open_cases": costs.get(k, {}).get("open"), "price_credits_per_claim": PRICE_CREDITS} for k, v in WORKFLOWS.items()],
         "pricing": {"reads": "free", "claim": f"{PRICE_CREDITS} credit per metered claim (POST /exceptions/{{id}}/resolve or /escalate)",
@@ -164,7 +170,8 @@ def menu(base_url, stats):
                             "proof": ["GET /proof", "POST /exceptions/{id}/verify (recorded once)", "POST /sandbox/reset"]},
         "mcp": {"url": f"{base_url}/mcp", "transport": "streamable-http (JSON responses)", "auth": "same bearer token; no X-Sandbox needed"},
         "links": {"openapi": f"{base_url}/openapi.json", "llms_txt": f"{base_url}/llms.txt", "agent_card": f"{base_url}/.well-known/agent-card.json",
-                  "policy": f"{base_url}/policy", "schema": f"{base_url}/schema"},
+                  "policy": f"{base_url}/policy", "schema": f"{base_url}/schema", "terms": f"{base_url}/terms", "privacy": f"{base_url}/privacy"},
+        "terms": f"{base_url}/terms",
     }
 
 
@@ -179,24 +186,32 @@ def llms_txt(m):
         L.append(f"- {sec}: " + "; ".join(m["client_contract"][sec]))
     L += ["", f"## MCP", "", f"POST `{m['mcp']['url']}` ({m['mcp']['transport']}); {m['mcp']['auth']}.", "", "## Links", ""]
     L += [f"- {k}: {v}" for k, v in m["links"].items()]
+    L += ["", f"Terms: {m['terms']} (taking a seat or sending a paid request is acceptance; draft, not legal advice)."]
     return "\n".join(L) + "\n"
 
 
 def html(m):
     rows = "".join(f"<tr><td>{it['kind']}</td><td>{it['description']}</td><td>${it['human_unit_cost_usd']}</td><td>{it['open_cases']}</td><td>{it['price_credits_per_claim']}</td></tr>" for it in m["menu"])
-    return f"""<!doctype html><html><head><meta charset="utf-8"><title>Proving Ground</title>
-<style>body{{font:15px/1.5 system-ui,sans-serif;max-width:860px;margin:3rem auto;padding:0 1rem;color:#222}}table{{border-collapse:collapse;width:100%}}td,th{{border-bottom:1px solid #ddd;padding:.4rem .5rem;text-align:left;vertical-align:top}}code,pre{{background:#f4f4f4;padding:.1rem .3rem}}</style></head>
-<body><h1>Proving Ground</h1><p>{m['what']}</p>
+    topup = m["pricing"]["top_up"]
+    pay = ", ".join(f"{t.get('method')} ({t.get('network')})" if isinstance(t, dict) else str(t) for t in topup) if isinstance(topup, list) else str(topup)
+    links = "".join(f'<a href="{v}">{k}</a>' + (" · " if i < len(m["links"]) - 1 else "") for i, (k, v) in enumerate(m["links"].items()))
+    return f"""<!doctype html><html><head><meta charset="utf-8"><title>Proving Ground — accounts-payable exception environment with a pass/fail verifier and proof packet for AI agents (MCP server, x402)</title>
+<meta name="description" content="{TAGLINE}">
+<style>body{{font:15px/1.45 system-ui,sans-serif;max-width:900px;margin:2rem auto;padding:0 1rem;color:#222}}table{{border-collapse:collapse;width:100%;font-size:14px}}td,th{{border-bottom:1px solid #ddd;padding:.3rem .5rem;text-align:left;vertical-align:top}}code,pre{{background:#f4f4f4;padding:.1rem .3rem;font-size:13px}}pre{{padding:.5rem;overflow:auto}}h1{{font-size:1.5rem;margin:.2rem 0}}h2{{font-size:1.1rem;margin:1rem 0 .3rem}}</style></head>
+<body><h1>Proving Ground</h1>
+<p><strong>An accounts-payable exception environment with a pass/fail verifier and proof packet, for AI agents.</strong> {TAGLINE.split(': ', 1)[1]}</p>
 <h2>Menu</h2><table><tr><th>Workflow</th><th>What</th><th>Human cost/case</th><th>Open</th><th>Credits/claim</th></tr>{rows}</table>
-<p>Reads are free. Each claim costs {PRICE_CREDITS} credit; every seat starts with {FREE_CREDITS}. Top up: <code>{json.dumps(m['pricing']['top_up'])}</code></p>
-<h2>Get a seat</h2><pre>curl -s -X POST {m['get_a_seat']['request']} -H 'Content-Type: application/json' -d '{{"name":"my-agent"}}'</pre>
-<p>Then send <code>Authorization: Bearer &lt;token&gt;</code> and <code>X-Sandbox: &lt;actor&gt;</code> on every call, or point an MCP client at <code>{m['mcp']['url']}</code> with the same token.</p>
-<h2>Links</h2><ul>{"".join(f'<li><a href="{v}">{k}</a></li>' for k, v in m['links'].items())}</ul></body></html>"""
+<p>Reads are free. Each claim costs {PRICE_CREDITS} credit; every seat starts with {FREE_CREDITS} free. Top up by: {pay} — details at <a href="{m['links'].get('pricing', m['links']['openapi'].replace('/openapi.json', '/pricing'))}">/pricing</a>.</p>
+<h2>Walk in</h2><pre>curl -s -X POST {m['get_a_seat']['request']} -H 'Content-Type: application/json' -d '{{"name":"my-agent"}}'</pre>
+<p>Then send <code>Authorization: Bearer &lt;token&gt;</code> and <code>X-Sandbox: &lt;actor&gt;</code> on every call — or point any MCP client at <code>{m['mcp']['url']}</code> (streamable HTTP; with the token, or with no auth: <code>initialize</code> seats you and returns <code>Mcp-Session-Id</code>).</p>
+<p>{links}</p>
+<p style="color:#666;font-size:13px">By taking a seat or sending a paid request you agree to the <a href="{m['terms']}">terms</a>. Draft terms; not legal advice.</p>
+</body></html>"""
 
 
 def agent_card(base_url):
-    return {"name": "Proving Ground", "description": "Sealed accounts-payable twin with a live exceptions queue; a code verifier meters each claim and GET /proof returns a proof packet.",
-            "url": base_url, "version": "0.3", "provider": {"organization": "Proving Ground"},
+    return {"name": "Proving Ground", "description": "Accounts-payable exception environment with a pass/fail verifier and proof packet for AI agents: a sealed AP twin with a live exceptions queue; a code verifier meters each claim; GET /proof returns the proof packet. MCP server at /mcp; x402 top-ups.",
+            "url": base_url, "version": "0.4", "provider": {"organization": "Proving Ground"}, "termsOfService": f"{base_url}/terms", "privacyPolicy": f"{base_url}/privacy",
             "capabilities": {"streaming": False, "pushNotifications": False},
             "authentication": {"schemes": ["bearer"], "credentials": f"POST {base_url}/seat returns a bearer token"},
             "defaultInputModes": ["application/json"], "defaultOutputModes": ["application/json"],
@@ -209,8 +224,38 @@ def agent_card(base_url):
 PROTOCOL = "2025-06-18"
 
 
-def mcp_tools(tool_defs):
-    return [{"name": t["function"]["name"], "description": t["function"]["description"], "inputSchema": t["function"]["parameters"]} for t in tool_defs]
+TOOL_ORDER = ["get_policy", "list_open_exceptions", "get_exception", "get_invoice", "search_invoices", "get_po", "search_pos", "get_vendor",
+              "search_vendors", "get_bank_transaction", "calculate", "list_resolved_examples",
+              "approve_invoice", "hold_invoice", "reject_invoice", "dispute_invoice", "link_po", "match_bank_transaction", "flag_bank_transaction", "flag_vendor",
+              "resolve_exception", "escalate_exception", "get_seat", "proof"]
+TITLES = {"get_policy": "Get the AP exception policy", "list_open_exceptions": "List open exceptions", "get_exception": "Get an exception",
+          "get_invoice": "Get an invoice", "search_invoices": "Search invoices", "get_po": "Get a purchase order", "search_pos": "Search purchase orders",
+          "get_vendor": "Get a vendor", "search_vendors": "Search vendors", "get_bank_transaction": "Get a bank transaction", "calculate": "Calculate exactly",
+          "list_resolved_examples": "List resolved examples", "approve_invoice": "Approve invoice", "hold_invoice": "Hold invoice", "reject_invoice": "Reject invoice",
+          "dispute_invoice": "Dispute invoice", "link_po": "Link invoice to PO", "match_bank_transaction": "Match payment to invoices",
+          "flag_bank_transaction": "Flag bank transaction", "flag_vendor": "Flag vendor", "resolve_exception": "Resolve exception (metered claim)",
+          "escalate_exception": "Escalate exception (metered claim)", "get_seat": "My seat and credits", "proof": "My proof packet"}
+WRITES = {"approve_invoice", "hold_invoice", "reject_invoice", "dispute_invoice", "link_po", "match_bank_transaction", "flag_bank_transaction", "flag_vendor",
+          "resolve_exception", "escalate_exception"}
+NON_IDEMPOTENT = {"match_bank_transaction", "resolve_exception", "escalate_exception"}
+
+
+def annotate(name):
+    write = name in WRITES
+    return {"title": TITLES.get(name, name.replace("_", " ")), "readOnlyHint": not write, "destructiveHint": write,
+            "idempotentHint": name not in NON_IDEMPOTENT, "openWorldHint": False}
+
+
+def mcp_tools(tool_defs, extra=()):
+    """MCP tool list: titles + annotations, ordered so the obvious first doors come first."""
+    defs = {t["function"]["name"]: {"name": t["function"]["name"], "description": t["function"]["description"], "inputSchema": t["function"]["parameters"]} for t in tool_defs}
+    for t in extra:
+        defs[t["name"]] = t
+    out = []
+    for n in TOOL_ORDER + [n for n in defs if n not in TOOL_ORDER]:
+        if n in defs:
+            out.append({**defs[n], "title": TITLES.get(n, n.replace("_", " ")), "annotations": annotate(n)})
+    return out
 
 
 def jsonrpc(body, tools, call):
@@ -241,3 +286,45 @@ def jsonrpc(body, tools, call):
         except Exception as e:  # noqa: BLE001
             return 200, {"jsonrpc": "2.0", "id": mid, "result": {"content": [{"type": "text", "text": json.dumps({"error": str(e)})}], "isError": True}}
     return 200, {"jsonrpc": "2.0", "id": mid, "error": {"code": -32601, "message": f"method not found: {method}"}}
+
+
+def md_html(md, title):
+    """Just enough markdown for the legal pages: headings, paragraphs, lists, tables, bold, code."""
+    import html as _h
+    import re
+    def inline(t):
+        t = _h.escape(t)
+        t = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", t)
+        t = re.sub(r"`(.+?)`", r"<code>\1</code>", t)
+        return t
+    out, para, lst, table = [], [], False, []
+    def flush():
+        nonlocal para, lst, table
+        if para:
+            out.append("<p>" + inline(" ".join(para)) + "</p>"); para = []
+        if lst:
+            out.append("</ul>"); lst = False
+        if table:
+            head, *rows = [r for r in table if not set(r.replace("|", "").strip()) <= set("-: ")]
+            cells = lambda r: [inline(c.strip()) for c in r.strip().strip("|").split("|")]  # noqa: E731
+            out.append("<table><tr>" + "".join(f"<th>{c}</th>" for c in cells(head)) + "</tr>" +
+                       "".join("<tr>" + "".join(f"<td>{c}</td>" for c in cells(r)) + "</tr>" for r in rows) + "</table>"); table = []
+    for line in md.splitlines():
+        if line.startswith("|"):
+            table.append(line); continue
+        if table:
+            flush()
+        if line.startswith("#"):
+            flush(); n = len(line) - len(line.lstrip("#")); out.append(f"<h{n}>{inline(line.lstrip('#').strip())}</h{n}>")
+        elif line.startswith("- "):
+            if para: out.append("<p>" + inline(" ".join(para)) + "</p>"); para = []
+            if not lst: out.append("<ul>"); lst = True
+            out.append(f"<li>{inline(line[2:])}</li>")
+        elif not line.strip():
+            flush()
+        else:
+            para.append(line)
+    flush()
+    return (f"<!doctype html><html><head><meta charset='utf-8'><title>{_h.escape(title)}</title><style>body{{font:15px/1.5 system-ui,sans-serif;max-width:860px;"
+            f"margin:2rem auto;padding:0 1rem;color:#222}}table{{border-collapse:collapse}}td,th{{border-bottom:1px solid #ddd;padding:.3rem .5rem;text-align:left;vertical-align:top}}"
+            f"code{{background:#f4f4f4;padding:.1rem .3rem}}</style></head><body>" + "".join(out) + "</body></html>")

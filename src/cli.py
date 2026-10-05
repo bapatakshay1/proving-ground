@@ -69,6 +69,8 @@ def main():
     st = sub.add_parser("statement", help="monthly customer statement + our cost side, from the billing ledger")
     st.add_argument("--db", default="out/sandboxes/live.db"); st.add_argument("--period", default=None, help="YYYY-MM (default: latest in ledger)")
     st.add_argument("--discovery-credit", type=float, default=0.0, help="unused discovery-fee credit to apply")
+    le = sub.add_parser("ledger-export", help="tax export: USDC receipts (Schedule C, $1.00 FMV) + credits consumed per seat, as CSV")
+    le.add_argument("--period", required=True, help="YYYY-MM"); le.add_argument("--out", default="out")
     a = ap.parse_args()
     if a.cmd == "seed":
         print(json.dumps(seed.build("out/twin.db", a.seed), indent=1))
@@ -80,6 +82,8 @@ def main():
         stop()
     elif a.cmd == "statement":
         print(billing.statement(a.db, a.period, a.discovery_credit)["markdown"])
+    elif a.cmd == "ledger-export":
+        print(json.dumps(billing.ledger_export(a.period, a.out), indent=1))
     elif a.cmd == "run-all":
         started = serve(background=True)
         try:
