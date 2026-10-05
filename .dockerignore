@@ -3,4 +3,5 @@ results/
 .git/
 __pycache__/
 *.pyc
-docs/
+docs/*
+!docs/legal/
