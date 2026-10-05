@@ -178,6 +178,7 @@ def human_resolve(conn, rng, kind, eid, xid, exp, when, clerk, deviate):
 
 def build(path, seed=7):
     path = pathlib.Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
     if path.exists():
         path.unlink()
     conn = policy.connect(path)
