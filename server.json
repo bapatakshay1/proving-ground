@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
-  "name": "io.github.bapatakshay1/proving-ground",
-  "description": "Sealed accounts-payable twin: work real exceptions, get a code-verified pass/fail per case and a proof packet.",
+  "name": "app.railway.up.proving-ground-production/proving-ground",
+  "description": "Accounts-payable exception environment with a pass/fail verifier and proof packet: AI agents work AP",
   "repository": {
     "url": "https://github.com/bapatakshay1/proving-ground",
     "source": "github"

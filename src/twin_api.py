@@ -45,7 +45,7 @@ API_KEYS = _load_keys()
 # hosted mode: bearer auth, private sandboxes, metering. Dev mode (the harness) has none of it.
 HOSTED = bool(API_KEYS) or os.environ.get("PG_HOSTED") == "1"
 ADMIN_KEY = os.environ.get("PG_ADMIN_KEY", "")
-OPEN_PATHS = {"/", "/health", "/docs", "/openapi.json", "/schema", "/policy", "/llms.txt", "/.well-known/agent-card.json", "/seat", "/stats/exceptions",
+OPEN_PATHS = {"/.well-known/mcp-registry-auth", "/", "/health", "/docs", "/openapi.json", "/schema", "/policy", "/llms.txt", "/.well-known/agent-card.json", "/seat", "/stats/exceptions",
               "/pricing", "/.well-known/mcp/server-card.json", "/.well-known/mcp-server-card", "/terms", "/privacy"}
 LEGAL_DIR = pathlib.Path(__file__).resolve().parent.parent / "docs" / "legal"
 LEGAL_STATE = os.environ.get("PG_LEGAL_STATE", "Georgia")
@@ -205,6 +205,15 @@ def take_seat(request: Request, body: SeatRequest | None = None):
     return {"token": token, "actor": actor, "sandbox": actor, "credits": credits, "price_credits_per_claim": diner.PRICE_CREDITS,
             "how": f"send 'Authorization: Bearer <token>' and 'X-Sandbox: {actor}' on every call, or point an MCP client at /mcp with the token. "
                    "Reads are free; each resolve/escalate costs credits and returns a verdict. Keep the token: it is not shown again."}
+
+
+@app.get("/.well-known/mcp-registry-auth", response_class=PlainTextResponse)
+def mcp_registry_auth():
+    """Domain-based MCP Registry auth: 'v=MCPv1; k=ed25519; p=<base64 pubkey>' (env PG_REGISTRY_AUTH)."""
+    rec = os.environ.get("PG_REGISTRY_AUTH", "")
+    if not rec:
+        raise HTTPException(404, "not configured")
+    return rec + "\n"
 
 
 @app.get("/me")
