@@ -20,7 +20,8 @@ except json.JSONDecodeError:
     TOPUP = []
 
 DDL = ["create table if not exists seats(token_hash text primary key, actor text unique, created_at text, credits integer, spent integer, plan text)",
-       "create table if not exists charges(id integer primary key autoincrement, actor text, ts text, exception_id integer, credits integer, passed integer)"]
+       "create table if not exists charges(id integer primary key autoincrement, actor text, ts text, exception_id integer, credits integer, passed integer)",
+       "create table if not exists payments(payment_key text primary key, actor text, ts text, rail text, amount_usd real, credits integer, payer text, transaction_id text, network text)"]
 _lock = threading.Lock()
 _recent = {}
 
@@ -106,6 +107,17 @@ def charge(actor, exception_id, passed):
         c.execute("update seats set credits=credits-?, spent=spent+? where actor=? and credits>=?", (PRICE_CREDITS, PRICE_CREDITS, actor, PRICE_CREDITS))
         c.execute("insert into charges(actor,ts,exception_id,credits,passed) values(?,?,?,?,?)", (actor, _now(), exception_id, PRICE_CREDITS, int(bool(passed))))
         return c.execute("select credits, spent from seats where actor=?", (actor,)).fetchone()
+
+
+def credit_for_payment(actor, payment_key, rail, amount_usd, credits, meta):
+    """Credit a seat for a settled payment exactly once. Returns (credited_now, seat_row)."""
+    with _conn() as c:
+        if c.execute("select 1 from payments where payment_key=?", (payment_key,)).fetchone():
+            return False, dict(c.execute("select actor, credits, spent, plan from seats where actor=?", (actor,)).fetchone())
+        c.execute("insert into payments(payment_key,actor,ts,rail,amount_usd,credits,payer,transaction_id,network) values(?,?,?,?,?,?,?,?,?)",
+                  (payment_key, actor, _now(), rail, amount_usd, int(credits), meta.get("payer"), meta.get("transaction"), meta.get("network")))
+        c.execute("update seats set credits=credits+?, plan='paid' where actor=?", (int(credits), actor))
+        return True, dict(c.execute("select actor, credits, spent, plan from seats where actor=?", (actor,)).fetchone())
 
 
 def credit(actor, credits, plan=None):

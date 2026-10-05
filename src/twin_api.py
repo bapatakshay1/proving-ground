@@ -18,7 +18,7 @@ from fastapi import FastAPI, Header, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from pydantic import BaseModel
 
-from . import actions, agents, diner, policy
+from . import actions, agents, diner, policy, x402
 
 BASE_DB = pathlib.Path(os.environ.get("PG_DB", "out/twin.db"))
 SANDBOX_DIR = pathlib.Path(os.environ.get("PG_SANDBOXES", "out/sandboxes"))
@@ -45,7 +45,8 @@ API_KEYS = _load_keys()
 # hosted mode: bearer auth, private sandboxes, metering. Dev mode (the harness) has none of it.
 HOSTED = bool(API_KEYS) or os.environ.get("PG_HOSTED") == "1"
 ADMIN_KEY = os.environ.get("PG_ADMIN_KEY", "")
-OPEN_PATHS = {"/", "/health", "/docs", "/openapi.json", "/schema", "/policy", "/llms.txt", "/.well-known/agent-card.json", "/seat", "/stats/exceptions"}
+OPEN_PATHS = {"/", "/health", "/docs", "/openapi.json", "/schema", "/policy", "/llms.txt", "/.well-known/agent-card.json", "/seat", "/stats/exceptions",
+              "/pricing", "/.well-known/mcp/server-card.json", "/.well-known/mcp-server-card"}
 
 
 def _ensure_sandbox(actor):
@@ -57,7 +58,7 @@ def _ensure_sandbox(actor):
 @app.middleware("http")
 async def auth(request: Request, call_next):
     path = request.url.path
-    if not HOSTED or path in OPEN_PATHS or path.startswith("/seats/"):
+    if not HOSTED or path in OPEN_PATHS or (path.startswith("/seats/") and path.endswith("/credit")):
         return await call_next(request)
     raw = request.headers.get("authorization", "")
     token = raw[7:].strip() if raw.lower().startswith("bearer ") else ""
@@ -89,7 +90,12 @@ def _base_url(request: Request):
 def _menu(request: Request):
     with db(None) as c:
         st = stats_for(c)
-    return diner.menu(_base_url(request), st)
+    m = diner.menu(_base_url(request), st)
+    methods = _topup_methods(_base_url(request))
+    if methods:
+        m["pricing"]["top_up"] = methods
+        m["links"]["pricing"] = f"{_base_url(request)}/pricing"
+    return m
 
 
 @app.get("/")
@@ -109,6 +115,39 @@ def llms(request: Request):
 @app.get("/.well-known/agent-card.json")
 def agent_card(request: Request):
     return diner.agent_card(_base_url(request))
+
+
+def server_card(base_url):
+    """MCP Server Card (SEP-2127, draft): catalog metadata only - tools are discovered live over /mcp."""
+    return {"serverInfo": {"name": "proving-ground", "version": "0.3.0"}, "protocolVersion": diner.PROTOCOL,
+            "description": "Sealed accounts-payable twin: work real exceptions, get a code-verified pass/fail per case and a proof packet.",
+            "transport": {"type": "streamable-http", "url": f"{base_url}/mcp"},
+            "authentication": {"type": "bearer", "obtain": f"POST {base_url}/seat (no account; returns a token, a private sandbox and free credits)"},
+            "capabilities": {"tools": {}}, "pricing": f"{base_url}/pricing", "homepage": base_url, "openapi": f"{base_url}/openapi.json"}
+
+
+@app.get("/.well-known/mcp/server-card.json")
+@app.get("/.well-known/mcp-server-card")
+def mcp_server_card(request: Request):
+    return server_card(_base_url(request))
+
+
+@app.get("/pricing")
+def pricing(request: Request):
+    base = _base_url(request)
+    out = {"unit": "credit", "reads": "free", "price_credits_per_claim": diner.PRICE_CREDITS, "free_credits_per_seat": diner.FREE_CREDITS,
+           "credit_usd": x402.CREDIT_USD if x402.enabled() else None, "top_up": _topup_methods(base)}
+    if x402.enabled():
+        out["x402"] = {"network": x402.NETWORK, "asset": x402.ASSETS[x402.NETWORK][0], "payTo": x402.PAY_TO, "scheme": "exact",
+                       "facilitator": x402.FACILITATOR, "example_402": x402.payment_required(diner.PRICE_CREDITS, f"{base}/exceptions/{{id}}/resolve", "metered claim")}
+    return out
+
+
+def _topup_methods(base_url):
+    methods = list(diner.TOPUP)
+    if x402.enabled():
+        methods.insert(0, x402.topup_method(base_url, diner.PRICE_CREDITS))
+    return methods
 
 
 class SeatRequest(BaseModel):
@@ -518,16 +557,63 @@ def flag_vendor(vid: int, body: Reason, x_sandbox: str | None = Header(None), x_
 
 
 class PaymentRequired(Exception):
-    def __init__(self, body):
-        self.body = body
+    def __init__(self, body, headers=None):
+        self.body, self.headers = body, headers or {}
 
 
-def claim(sandbox, actor, metered, fn, xid, arg):
+def _required(actor, resource, error=None):
+    """The 402: the diner's JSON body plus, when x402 is configured, the spec'd PAYMENT-REQUIRED header (base64 JSON)."""
+    body = diner.payment_required(actor)
+    body["top_up"]["methods"] = _topup_methods(resource.rsplit("/exceptions", 1)[0] if "/exceptions" in resource else resource.rsplit("/seats", 1)[0])
+    # HTTP header names are case-insensitive: the spec'd PAYMENT-REQUIRED (base64 PaymentRequired) replaces the
+    # plain "Payment-Required: true" flag rather than sitting next to it, or clients see two values for one name.
+    if x402.enabled():
+        pr = x402.payment_required(diner.PRICE_CREDITS, resource, "Proving Ground: one metered claim (resolve/escalate) with verdict", error)
+        body["x402"] = pr
+        headers = {"PAYMENT-REQUIRED": x402.b64(pr)}
+    else:
+        headers = {"Payment-Required": "true"}
+        if error:
+            body["error"] = error
+    return PaymentRequired(body, headers)
+
+
+def settle_payment(actor, payment_header, resource, min_credits=None):
+    """Turn a PAYMENT-SIGNATURE into credits: verify, settle, credit once per payment. Returns the settlement info."""
+    if not x402.enabled():
+        raise _required(actor, resource, "x402 is not enabled on this server")
+    try:
+        payload = x402.parse_payment(payment_header)
+        req = x402.requirements(min_credits or diner.PRICE_CREDITS, resource, "Proving Ground credits")
+        amount = x402.check_accepted(payload, req)
+    except x402.PaymentError as e:
+        raise _required(actor, resource, str(e))
+    key = x402.payment_key(payload)
+    with diner._conn() as c:
+        seen = c.execute("select credits, payer, transaction_id from payments where payment_key=?", (key,)).fetchone()
+    if seen:  # replayed header: honour the earlier settlement, never settle or credit twice
+        return {"payment_key": key[:16], "credits": seen["credits"], "payer": seen["payer"], "transaction": seen["transaction_id"], "replayed": True}
+    ok, info = x402.verify_and_settle(payload, {**req, "amount": payload["accepted"]["amount"]})
+    if not ok:
+        raise _required(actor, resource, f"payment {info['stage']} failed: {info['reason']}")
+    usd = amount / 1_000_000
+    credits = int(usd / x402.CREDIT_USD + 1e-9)
+    diner.credit_for_payment(actor, key, "x402", usd, credits, info)
+    return {"payment_key": key[:16], "credits": credits, "amount_usd": usd, **info}
+
+
+def claim(sandbox, actor, metered, fn, xid, arg, payment=None, resource=""):
     """A claim (resolve/escalate). Hosted mode: the verifier runs at once and the verdict rides in the response;
-    seat actors pay the price in credits, checked before the state changes so an unpaid claim changes nothing."""
+    seat actors pay the price in credits, checked before the state changes so an unpaid claim changes nothing.
+    A PAYMENT-SIGNATURE on the request tops the seat up first (x402), then the claim proceeds."""
+    settled = None
+    if metered and payment:
+        settled = settle_payment(actor, payment, resource)
     if metered and not diner.can_pay(actor):
-        raise PaymentRequired(diner.payment_required(actor))
+        raise _required(actor, resource)
     out = _do(sandbox, actor, fn, xid, arg)
+    if settled:
+        out["payment"] = settled
     if HOSTED:
         with db(sandbox) as c:
             out["verdict"] = record_verdict(c, xid, actor)
@@ -538,21 +624,43 @@ def claim(sandbox, actor, metered, fn, xid, arg):
     return out
 
 
-def _claim_route(x_sandbox, x_actor, x_seat, fn, xid, arg):
+def _claim_route(request, x_sandbox, x_actor, x_seat, payment, fn, xid, arg):
     try:
-        return claim(x_sandbox, x_actor, x_seat == "1", fn, xid, arg)
+        out = claim(x_sandbox, x_actor, x_seat == "1", fn, xid, arg, payment, str(request.url))
     except PaymentRequired as e:
-        return JSONResponse(e.body, status_code=402, headers={"Payment-Required": "true"})
+        return JSONResponse(e.body, status_code=402, headers=e.headers)
+    if out.get("payment"):
+        return JSONResponse(out, headers={"PAYMENT-RESPONSE": x402.settlement_header(out["payment"])})
+    return out
 
 
 @app.post("/exceptions/{xid}/resolve")
-def resolve(xid: int, body: Summary, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None), x_seat: str | None = Header(None)):
-    return _claim_route(x_sandbox, x_actor, x_seat, actions.resolve_exception, xid, body.summary)
+def resolve(request: Request, xid: int, body: Summary, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None),
+            x_seat: str | None = Header(None), payment_signature: str | None = Header(None)):
+    return _claim_route(request, x_sandbox, x_actor, x_seat, payment_signature, actions.resolve_exception, xid, body.summary)
 
 
 @app.post("/exceptions/{xid}/escalate")
-def escalate(xid: int, body: Reason, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None), x_seat: str | None = Header(None)):
-    return _claim_route(x_sandbox, x_actor, x_seat, actions.escalate_exception, xid, body.reason)
+def escalate(request: Request, xid: int, body: Reason, x_sandbox: str | None = Header(None), x_actor: str | None = Header(None),
+             x_seat: str | None = Header(None), payment_signature: str | None = Header(None)):
+    return _claim_route(request, x_sandbox, x_actor, x_seat, payment_signature, actions.escalate_exception, xid, body.reason)
+
+
+@app.post("/seats/{actor}/topup/x402")
+def topup_x402(request: Request, actor: str, x_actor: str | None = Header(None), x_seat: str | None = Header(None), payment_signature: str | None = Header(None)):
+    """Buy credits ahead of time with an x402 payment. Any multiple of the per-credit price buys that many credits."""
+    if actor != x_actor:
+        raise HTTPException(403, "you can only top up your own seat")
+    if x_seat != "1":
+        raise HTTPException(400, "env-key actors are unmetered; nothing to top up")
+    if not payment_signature:
+        e = _required(actor, str(request.url), "send a PAYMENT-SIGNATURE header with an x402 payment")
+        return JSONResponse(e.body, status_code=402, headers=e.headers)
+    try:
+        settled = settle_payment(actor, payment_signature, str(request.url), min_credits=1)
+    except PaymentRequired as e:
+        return JSONResponse(e.body, status_code=402, headers=e.headers)
+    return JSONResponse({"ok": True, "seat": diner.seat(actor), "payment": settled}, headers={"PAYMENT-RESPONSE": x402.settlement_header(settled)})
 
 
 # ---------------- MCP: the same tools, in-process ----------------
@@ -628,7 +736,7 @@ async def mcp(request: Request, x_sandbox: str | None = Header(None), x_actor: s
         try:
             return mcp_call(name, args, x_sandbox, actor, x_seat == "1")
         except PaymentRequired as e:
-            return {"error": "payment required", **e.body}
+            return {"error": "payment required", **e.body, "pay_via": "POST /seats/<actor>/topup/x402 with a PAYMENT-SIGNATURE header, or retry the REST claim with it"}
         except HTTPException as e:
             return {"error": e.detail}
 

@@ -56,3 +56,44 @@ true-up invoice. Nothing in the loop depends on Stripe — the ledger is the sys
 
 Model bills: OpenRouter invoices us; every call's real cost is captured (`llm.COST`, per-case `usd`) and
 flows into the ledger, so our cost of goods per customer is reconcilable line by line.
+
+## x402 top-up (the agent-native rail)
+
+Research (Oct 2026): x402 — HTTP 402 + USDC, Coinbase-originated, now governed by an x402 Foundation
+under the Linux Foundation (Visa, Mastercard, Stripe, Google, AWS among the Premier members) — is the
+one rail where a seller can gate an endpoint and receive money from a machine with no buyer-side human
+and no seller KYC beyond a CDP API key. CDP facilitator fees: first 1,000 settlements/month free, then
+$0.001 each; verification is free; no percentage fee; no chargebacks; USDC does not move in value.
+Independent analysis (CoinDesk, Mar 2026) put real volume at ~$28k/day with ~half of activity gamed,
+so expect early payers to be developers testing, not agents with budgets.
+
+**Flow (V2, `exact` scheme, USDC on Base):**
+1. A metered claim with no credits → `402` with `PAYMENT-REQUIRED: <base64 PaymentRequired>`; the JSON
+   body also carries it under `x402` for humans. `GET /pricing` shows the same requirements.
+2. The agent's wallet signs an EIP-3009 transfer for `amount` to `payTo` and retries with
+   `PAYMENT-SIGNATURE: <base64 PaymentPayload>` — on the claim itself, or on
+   `POST /seats/<actor>/topup/x402` to buy credits ahead (any multiple of the per-credit price).
+3. The server calls the facilitator `/verify` then `/settle`, credits the seat once per payment
+   (idempotency key = the payer's signature; replays return the earlier settlement and never credit
+   twice), and the claim proceeds. Success responses carry `PAYMENT-RESPONSE: <base64 SettlementResponse>`.
+
+**Env to go live:**
+
+| Var | Meaning |
+|---|---|
+| `PG_X402_PAY_TO` | Your receiving address (0x…, any EVM address you control: Coinbase Business, CDP wallet, or self-custody) |
+| `PG_X402_NETWORK` | `base` (eip155:8453, default) or `base-sepolia` (eip155:84532, testnet) |
+| `PG_CREDIT_USD` | USD per credit (default 0.05; one claim = `PG_PRICE_CREDITS` credits) |
+| `PG_X402_FACILITATOR` | Override; default CDP (`https://api.cdp.coinbase.com/platform/v2/x402`) on mainnet, `https://x402.org/facilitator` on Base Sepolia |
+| `PG_CDP_API_KEY_ID` / `PG_CDP_API_KEY_SECRET` | CDP secret API key (Ed25519) for the CDP facilitator; built-in EdDSA JWT signing, no dependency |
+
+**What you must create:** a Coinbase Developer Platform account → Secret API key (Ed25519); a receiving
+wallet (Coinbase Business if you want free ACH cash-out to a bank, else any address). Testnet first:
+`PG_X402_NETWORK=base-sepolia` uses the public facilitator with no account at all.
+
+**Alternative — Stripe Machine Payments Protocol (MPP):** stablecoin payments from $0.01 at a flat 1.5%,
+settling to your Stripe balance in fiat; requires a Stripe account, review for the "Stablecoins and
+Crypto" method, US seller (not NY), preview APIs. Stripe also accepts x402 on Base via the CDP
+facilitator. Card-network agent rails (Visa TAP, Mastercard Agent Pay, AP2) are not seller rails for
+API micro-calls yet. The meter here is rail-agnostic: a Stripe webhook would call
+`POST /seats/{actor}/credit` with the admin key.
