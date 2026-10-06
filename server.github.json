@@ -1,0 +1,24 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-07-09/server.schema.json",
+  "name": "io.github.bapatakshay1/proving-ground",
+  "description": "Accounts-payable exception environment with a pass/fail verifier and proof packet: AI agents work AP",
+  "repository": {
+    "url": "https://github.com/bapatakshay1/proving-ground",
+    "source": "github"
+  },
+  "version": "0.3.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://proving-ground-production.up.railway.app/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer <token>. Get a token with POST https://proving-ground-production.up.railway.app/seat (no account needed).",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
